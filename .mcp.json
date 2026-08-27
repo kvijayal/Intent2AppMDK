@@ -2,7 +2,14 @@
   "mcpServers": {
     "Intent2App": {
       "type": "http",
-      "url": "http://localhost:3999/mcp"
+      "url": "http://localhost:3999/mcp",
+      "description": "Intent2App local MCP server — CAP, Fiori, UI5, MDK local tools"
+    },
+    "mdk": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@sap/mdk-mcp-server"],
+      "description": "Official SAP MDK MCP server — mdk-create, mdk-gen, mdk-manage, mdk-docs, mdk-fetch-mobile-metadata"
     }
   }
 }

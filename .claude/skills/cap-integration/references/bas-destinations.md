@@ -1,4 +1,4 @@
-*Part of the destinations-and-services skill.*
+*Part of the cap-integration skill.*
 
 # BAS destinations
 

@@ -1,4 +1,4 @@
-*Part of the fiori-annotations skill.*
+*Part of the fiori-elements skill.*
 
 # Value helps & actions
 
@@ -88,7 +88,7 @@ annotate PurchaseOrderService.PurchaseOrders with @(
 - The `Action` value is `<ServiceName>.<actionName>` (a bound action on the entity).
 - `![@UI.Criticality]` colours the button using the standard enum (`#Positive` green, `#Negative` red, `#Critical` orange, `#Neutral`).
 - For actions with parameters (e.g. `reject(reason)`), FE renders a parameter dialog automatically — no controller code.
-- Guard transitions server-side in the CAP action handler (e.g. reject an invalid status change with HTTP 409). See `cap-best-practices` and `unit-testing`.
+- Guard transitions server-side in the CAP action handler (e.g. reject an invalid status change with HTTP 409). See `cap-skill` and `sap-unit-testing`.
 
 ## Navigation as a "value help" (semantic links)
 

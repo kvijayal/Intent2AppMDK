@@ -21,9 +21,6 @@ Skills encode deeper patterns; this file establishes the non-negotiable defaults
 | UI5 version | Resolved at runtime via `mcp__intent2app__ui5_get_version_info` (recommended maintenance stream; fallback minimum `1.136+`) | — |
 | UI5 theme | `sap_horizon` | — |
 | TypeScript | Freestyle UI5 apps only | — |
-| MDK schema version | `26.6` | per `@sap/mdk-mcp-server` 0.4.0 `mdkConfig.schemaVersion` |
-| MDK CLI | `@sap/mdk-tools` | `^1.16.0` |
-| Node.js (MDK) | `>=22` | Node 24 recommended |
 
 ---
 
@@ -57,21 +54,19 @@ Phase 6: Build & Deploy). Load `mdk-patterns` skill at the start of any `create-
 **Never answer MDK or SAP Asset Manager (SSAM) questions using only file-system tools (Glob, Grep, Read).**
 Always call the MDK MCP tools first:
 
-Both the **local Intent2App tools** (`mcp__intent2app__mdk_*`) and the **official SAP MDK server tools** (`mcp__mdk__mdk-*`) are available. Use local tools for offline-robust fallback; prefer SAP server tools for full fidelity (Yeoman scaffolding, vector doc search).
+| Task | Required MCP tool |
+|---|---|
+| Read project context, entity sets, page inventory | `mcp__intent2app__mdk_read_project_context` |
+| Look up page/action/control schemas and docs | `mcp__intent2app__mdk_get_docs` |
+| Scaffold / create project | `mcp__intent2app__mdk-create` |
+| Generate pages, actions, rules | `mcp__intent2app__mdk-gen` |
+| Validate, build, deploy, QR code | `mcp__intent2app__mdk-manage` |
+| Discover Mobile Services apps and destinations | `mcp__intent2app__mdk_mobile_services` |
+| Validate project settings | `mcp__intent2app__mdk_check_settings` |
 
-| Task | Local tool | SAP server tool |
-|---|---|---|
-| Scaffold / create project | `mcp__intent2app__mdk_create` | `mcp__mdk__mdk-create` |
-| Generate pages, actions, rules | `mcp__intent2app__mdk_gen` | `mcp__mdk__mdk-gen` |
-| Validate, build, deploy, QR code | `mcp__intent2app__mdk_manage` | `mcp__mdk__mdk-manage` |
-| Look up schemas and docs | `mcp__intent2app__mdk_get_docs` | `mcp__mdk__mdk-docs` |
-| Fetch Mobile Services metadata | *(via mdk_mobile_services)* | `mcp__mdk__mdk-fetch-mobile-metadata` |
-| Discover Mobile Services apps | `mcp__intent2app__mdk_mobile_services` | *(not in SAP server)* |
-| Read existing project context | `mdk-project-setup` **skill** | — |
-| Check / fix bundler externals | `mdk-bundler-settings` **skill** | — |
-
+The MCP server runs at `http://localhost:3999/mcp` (HTTP transport, `.mcp.json`).
 If a tool call fails with a connection error, stop and tell the developer:
-> "MDK MCP server is not reachable. Please reload the Claude Code window and retry."
+> "MDK MCP server is not reachable at port 3999. Please start it and reload the Claude Code window before retrying."
 Do NOT fall back to file-system tools for MDK/SSAM questions — surface the error instead.
 
 ---
@@ -107,18 +102,6 @@ Do NOT fall back to file-system tools for MDK/SSAM questions — surface the err
 | New MDK project (any type) | `mdk-patterns` skill — 6-phase workflow (env → scaffold → service → UI → rules → deploy) |
 | MDK page / action / rule schemas | `mdk-patterns` skill — Phase 4 & 5 patterns |
 | MDK build & deploy to Mobile Services | `mdk-patterns` skill — Phase 6 |
-| Read existing MDK project context | `mdk-project-setup` skill — reads `.project.json` + `.service.metadata` directly |
-| Check / fix MDK bundler externals | `mdk-bundler-settings` skill — reads/writes `.vscode/settings.json` directly |
-| MDK offline sync conflict resolution | `mdk-offline-resilience` skill |
-| MDK app versioning, OnWillUpdate, OnDidUpdate | `mdk-app-update` skill |
-| MDK rules, clientAPI, NativeScript APIs | `mdk-rules-library` skill |
-| MDK anti-patterns, code review checklist | `mdk-best-practices` skill |
-| MDK schema version upgrade (24.7 → 26.6) | `mdk-migration` skill |
-| CF login, region setup, Mobile Services configuration | `mdk-cf-mobile-services` skill |
-| SSAM project conventions, CIM file, ZEquinorSSAM folder | `mdk-ssam-patterns` skill |
-| SSAM version upgrade, Metadata Upgrade Tool, merge conflicts | `mdk-ssam-upgrade` skill |
-| CAP backend + MDK mobile frontend full-stack | `mdk-cap-integration` skill |
-| Multi-environment deploy, device onboarding, QR code, CI/CD | `mdk-environment-deploy` skill |
 
 ---
 
@@ -135,9 +118,6 @@ Do NOT fall back to file-system tools for MDK/SSAM questions — surface the err
 - **No `gen/` committed to git** — `gen/` must be in `.gitignore`; it is rebuilt by `mbt build`.
 - **No `default-env.json` committed** — contains live VCAP_SERVICES credentials.
 - **No `existing_destinations_policy: fail`** — breaks every redeploy; use `update`.
-- **No hardcoded strings in MDK metadata** — all user-visible strings use `{i18n>Key}`.
-- **No manual `.service.metadata` generation** — use `mdk_mobile_services` (fetch-metadata) or VS Code MDK extension.
-- **No files written to `SAPAssetManager/`** (SSAM projects) — read-only reference only; implement in `ZEquinorSSAM/`.
 
 ---
 
@@ -183,7 +163,7 @@ Add `crossNavigation.inbounds` to `manifest.json` and ensure `sap.app.sap.cloud.
 ✅ CAP Node.js + Freestyle UI5 (TypeScript)
 ✅ Fiori Elements consuming external OData / RAP (mock + proxy)
 ✅ SAP BPA workflow Start UI + Task UI
-✅ MDK (Mobile Development Kit) — online/offline CRUD, Mobile Services integration, SSAM projects
+✅ MDK (Mobile Development Kit) — online/offline CRUD, Mobile Services integration
 🚫 RAP/ABAP Cloud development (consumption only)
 🚫 Pro-code side-by-side extensibility (planned, not implemented)
 🚫 Event-driven / SAP Event Mesh (planned, not implemented)

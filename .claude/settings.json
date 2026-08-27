@@ -44,15 +44,8 @@
       "mcp__intent2app__fiori_search_docs",
       "mcp__intent2app__fiori_list_apps",
       "mcp__intent2app__fiori_download_odata_metadata",
-      "mcp__intent2app__mdk_read_project_context",
       "Bash(npx @sap/mdk-mcp-server:*)",
-      "mcp__intent2app__mdk_check_settings",
       "mcp__intent2app__mdk_mobile_services",
-      "mcp__mdk-mcp__mdk-create",
-      "mcp__mdk-mcp__mdk-gen",
-      "mcp__mdk-mcp__mdk-manage",
-      "mcp__mdk-mcp__mdk-docs",
-      "mcp__mdk-mcp__mdk-fetch-mobile-metadata",
       "Bash(*)",
       "PowerShell(*)",
       "WebSearch",
@@ -105,7 +98,16 @@
       "mcp__Intent2App__cap_search_docs",
       "mcp__Intent2App__fiori_search_docs",
       "mcp__Intent2App__fiori_list_apps",
-      "mcp__Intent2App__fiori_download_odata_metadata"
+      "mcp__Intent2App__fiori_download_odata_metadata",
+      "mcp__mdk__mdk-create",
+      "mcp__mdk__mdk-gen",
+      "mcp__mdk__mdk-manage",
+      "mcp__mdk__mdk-docs",
+      "mcp__mdk__mdk-fetch-mobile-metadata",
+      "mcp__intent2app__mdk_create",
+      "mcp__intent2app__mdk_gen",
+      "mcp__intent2app__mdk_manage",
+      "mcp__intent2app__mdk_get_docs"
     ]
   },
   "hooks": {

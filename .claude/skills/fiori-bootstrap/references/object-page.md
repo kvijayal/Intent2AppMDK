@@ -1,4 +1,4 @@
-*Part of the fiori-app-bootstrapping skill.*
+*Part of the fiori-bootstrap skill.*
 
 # Standalone Object Page
 
@@ -89,7 +89,7 @@ Same default-model block as every backend-bound app:
 
 ```jsonc
 "dependencies": {
-  "minUI5Version": "1.120.0",
+  "minUI5Version": "{RECOMMENDED_UI5_VERSION}",
   "libs": {
     "sap.ui.core": {}, "sap.m": {}, "sap.fe.core": {},
     "sap.fe.templates": {}, "sap.fe.macros": {},
@@ -100,7 +100,7 @@ Same default-model block as every backend-bound app:
 
 ## Header & facets come from annotations
 
-The Object Page layout is annotation-driven. Define these in `srv/annotations.cds` (see `fiori-annotations` `references/object-page.md`):
+The Object Page layout is annotation-driven. Define these in `srv/annotations.cds` (see `fiori-elements` `references/object-page.md`):
 
 - **`UI.HeaderInfo`** — `TypeName`/`TypeNamePlural`, `Title`, `Description` shown at the top.
 - **`UI.HeaderFacets`** — compact KPIs/status badges in the header area (e.g. a `UI.DataPoint` status with `CriticalityRepresentation: #WithIcon`).

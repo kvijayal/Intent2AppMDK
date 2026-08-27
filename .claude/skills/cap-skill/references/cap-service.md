@@ -66,7 +66,23 @@ service OrdersService @(requires: 'authenticated-user') {
 service OrdersService {
   entity Orders { key ID: UUID; title: String; }
 }
+
+// ❌ Code-list / value-help entity defined OUTSIDE the service block
+//    It compiles fine but is never mounted as an OData endpoint — value-help
+//    dropdowns silently 404 at runtime with no visible error in the UI.
+service OrdersService @(requires: 'authenticated-user') {
+  entity Orders as projection on db.Orders;
+}
+@readonly entity StatusValues as projection on db.StatusValues;  // ← WRONG: outside block
+
+// ✅ Correct — all value-help entities inside the service block
+service OrdersService @(requires: 'authenticated-user') {
+  entity Orders      as projection on db.Orders;
+  @readonly entity StatusValues as projection on db.StatusValues;  // ← inside block
+}
 ```
+
+**Rule: every entity referenced by a `@Common.ValueList CollectionPath` annotation MUST be declared inside the `service { }` block.** Top-level entity projections are valid CDS syntax for reuse/extension, but they are never exposed as OData entity sets. The Fiori Elements value-help machinery calls `GET /odata/v4/<service>/<CollectionPath>` — if that entity is not inside the service, the response is `404 Invalid resource path` and the dropdown stays empty with no console error visible to the user.
 
 ## Actions Pattern
 
@@ -90,6 +106,63 @@ service OrdersService @(requires: 'authenticated-user') {
   };
 }
 ```
+
+## Lookup / Value Help Function
+
+Any field whose valid values come from a finite list (plant, cost centre, material type, etc.)
+**must** be backed by a CAP function that returns that list — even if the data is mocked locally.
+Without this function the UI SelectDialog has nothing to bind to, and the value help is not built.
+
+### CDS — type + function definition
+
+```cds
+// Type for one result row
+type PlantResult {
+  plant       : String(4);
+  description : String(50);
+}
+
+service MyService @(requires: 'authenticated-user') {
+  // ...entities...
+
+  // Value-help lookup — no @restrict needed (read-only, authenticated-user is enough)
+  function getPlants(companyCode: String(4)) returns array of PlantResult;
+}
+```
+
+### Handler — `srv/service.js`
+
+```javascript
+srv.on('getPlants', (req) => {
+  // Replace with a real SELECT / remote call in production
+  const MOCK_PLANTS = [
+    { plant: '1000', description: 'Plant Hamburg' },
+    { plant: '1001', description: 'Plant Berlin'  },
+    { plant: '1100', description: 'Plant Munich'  },
+    { plant: '2000', description: 'Plant Walldorf' },
+  ];
+  cds.log('srv').info('getPlants', { companyCode: req.data.companyCode });
+  return MOCK_PLANTS;
+});
+```
+
+### OData call from the UI
+
+```
+GET /odata/v4/my-service/getPlants(companyCode='1000')
+Accept: application/json
+```
+
+Response shape: `{ "value": [ { "plant": "1000", "description": "Plant Hamburg" }, ... ] }`
+
+### Coverage gate
+
+A value help function is **required** whenever:
+- the Requirement Register contains a MultiInput / dropdown / search-help on a code field, OR
+- the UI view has `showValueHelp="true"` on any input.
+
+Verify the function exists in the CDS service, the handler is registered, and the UI controller
+calls it (see `fiori-freestyle/references/value-help-select-dialog.md` for the full UI pattern).
 
 ## Error Handling
 

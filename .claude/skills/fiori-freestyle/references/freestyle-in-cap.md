@@ -1,4 +1,4 @@
-*Part of the fiori-app-bootstrapping skill.*
+*Part of the fiori-bootstrap skill.*
 
 # Freestyle UI5 inside a CAP project
 

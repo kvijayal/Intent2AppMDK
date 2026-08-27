@@ -16,6 +16,6 @@ You are running **MODIFY** mode in the MAIN thread. The request: `$ARGUMENTS`
 3. **Re-ground.** The developer must re-read the Technical Design Document (and the code) so changes
    fit the existing architecture; run `validate_namespace` / `clean_core_check` context as needed.
 4. **Delegate.** Spawn the relevant developer to apply **only** the approved items:
-   CAP model/service/handler/auth → **`cap-developer`**; UI/annotation/freestyle → **`fiori-developer`**.
+   CAP model/service/handler/auth → **`cap-developer`**; UI/annotation/freestyle → **`fiori-developer`**. **If the change adds or edits an FPM page/section, the `fiori-developer` brief MUST require `fiori-bootstrap` → `fpm.md` + `fiori-elements` → `fpm-annotations.md`.**
 5. **Re-verify.** Re-run `run_checks`, update the Requirement Register / Coverage report, and offer to
    re-run `/review` or `/test` to confirm the findings are resolved.

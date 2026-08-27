@@ -1,8 +1,8 @@
-*Part of the fiori-annotations skill.*
+*Part of the fiori-elements skill.*
 
 # Analytical List Page — charts & KPIs
 
-The ALP floorplan needs analytical annotations on top of the List Report ones: a `UI.Chart`, a `UI.PresentationVariant` listing both chart and table, and (recommended) a `UI.SelectionPresentationVariant`. KPIs are expressed as `UI.DataPoint`s. Put these in `srv/annotations.cds`. For the manifest side (`sap.fe.templates.AnalyticalListPage`, `defaultTemplateAnnotationPath`, `sap.chart`/`sap.viz` libs) see `fiori-app-bootstrapping/references/analytical-list-page.md`.
+The ALP floorplan needs analytical annotations on top of the List Report ones: a `UI.Chart`, a `UI.PresentationVariant` listing both chart and table, and (recommended) a `UI.SelectionPresentationVariant`. KPIs are expressed as `UI.DataPoint`s. Put these in `srv/annotations.cds`. For the manifest side (`sap.fe.templates.AnalyticalListPage`, `defaultTemplateAnnotationPath`, `sap.chart`/`sap.viz` libs) see `fiori-bootstrap/references/analytical-list-page.md`.
 
 ## UI.DataPoint — the KPI / measure backing
 

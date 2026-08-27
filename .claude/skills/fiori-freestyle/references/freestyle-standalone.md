@@ -1,4 +1,4 @@
-*Part of the fiori-app-bootstrapping skill.*
+*Part of the fiori-bootstrap skill.*
 
 # Freestyle UI5 (standalone, TypeScript)
 
@@ -188,6 +188,106 @@ If the app binds to an OData service, add the `dataSources.mainService` + defaul
 - No jQuery, no `sap.ui.getCore()`, navigate via `this.getOwnerComponent().getRouter().navTo()`, log via the `Log` module (no `console.log`).
 - All labels in i18n.
 
+## Value Help (SelectDialog) Pattern
+
+Any field with a constrained vocabulary (plant, cost centre, material, etc.) **must** have a value
+help wired end-to-end. Three layers are all required — missing any one of them means the feature
+is not built.
+
+### Layer 1 — View XML
+
+Add `showValueHelp="true"` and `valueHelpRequest` to the `MultiInput` (or `Input`):
+
+```xml
+<MultiInput
+    id="plantInput"
+    showValueHelp="true"
+    valueHelpRequest=".onPlantValueHelp"
+    tokenUpdate=".onTokenUpdate"
+    submit=".onAddPlant"
+    placeholder="{i18n>plantPlaceholder}"/>
+```
+
+### Layer 2 — Controller (TypeScript)
+
+```typescript
+import SelectDialog from "sap/m/SelectDialog";
+import StandardListItem from "sap/m/StandardListItem";
+import Filter from "sap/ui/model/Filter";
+import FilterOperator from "sap/ui/model/FilterOperator";
+
+// Private fields
+private _plantDialog: SelectDialog | null = null;
+private _allPlants: Array<{ plant: string; description: string }> = [];
+
+public async onPlantValueHelp(): Promise<void> {
+    // 1. Fetch from CAP lookup function
+    try {
+        const companyCode: string = this._viewModel.getProperty("/companyCode");
+        const resp = await fetch(
+            `/odata/v4/my-service/getPlants(companyCode='${encodeURIComponent(companyCode)}')`,
+            { headers: { Accept: "application/json" } }
+        );
+        if (resp.ok) {
+            const json = await resp.json() as { value: typeof this._allPlants };
+            this._allPlants = json.value ?? [];
+        }
+    } catch { this._allPlants = []; }
+
+    // 2. Lazy-create dialog
+    if (!this._plantDialog) {
+        this._plantDialog = new SelectDialog({
+            title: this._getText("selectPlantsTitle"),
+            multiSelect: true,
+            rememberSelections: false,
+            confirm: (oEvt: Event) => {
+                const items = oEvt.getParameter("selectedItems") as StandardListItem[];
+                const oInput = this.byId("plantInput") as MultiInput;
+                items?.forEach(item => {
+                    const key = item.getTitle();
+                    if (!oInput.getTokens().some(t => t.getKey() === key)) {
+                        oInput.addToken(new Token({ key, text: `${key} – ${item.getDescription()}` }));
+                    }
+                });
+                this._syncPlants();
+            },
+            search: (oEvt: Event) => {
+                const q = ((oEvt.getParameter("value") as string) ?? "").toLowerCase();
+                (oEvt.getSource() as SelectDialog).getBinding("items")?.filter(
+                    q ? [new Filter({ and: false, filters: [
+                        new Filter("plant", FilterOperator.Contains, q),
+                        new Filter("description", FilterOperator.Contains, q)
+                    ]})] : []
+                );
+            }
+        });
+        this.getView()!.addDependent(this._plantDialog);
+    }
+
+    // 3. Bind fresh data and open
+    const model = new JSONModel(this._allPlants);
+    this._plantDialog.setModel(model);
+    this._plantDialog.bindAggregation("items", {
+        path: "/", templateShareable: false,
+        template: new StandardListItem({ title: "{plant}", description: "{description}", type: "Active" })
+    });
+    this._plantDialog.open();
+}
+```
+
+### Layer 3 — CAP backend (required even for mock data)
+
+See `cap-skill/references/cap-service.md` → "Lookup / Value Help Function" for the CDS type,
+function definition, and `srv.on` handler with mock data.
+
+### Coverage gate
+
+A value help requirement is **Built** only when ALL THREE layers are present and connected.
+Grep for `valueHelpRequest` in the view and verify the matching controller method, CDS function,
+and `srv.on` handler all exist before marking the requirement done.
+
+---
+
 ## Checklist
 
-`Component.ts` extends `UIComponent`, sets device model, calls `getRouter().initialize()` · `IAsyncContentCreation` in metadata · `index.html` uses `ComponentSupport` (no inline script) · `App.view.xml` has `<App id="app">` matching `controlId` · `sap.m.routing.Router` + `rootView` + `async: true` · `tsc --noEmit` clean · namespace consistent.
+`Component.ts` extends `UIComponent`, sets device model, calls `getRouter().initialize()` · `IAsyncContentCreation` in metadata · `index.html` uses `ComponentSupport` (no inline script) · `App.view.xml` has `<App id="app">` matching `controlId` · `sap.m.routing.Router` + `rootView` + `async: true` · `tsc --noEmit` clean · namespace consistent · every `valueHelpRequest` in the view has a matching controller method **and** a CAP lookup function.

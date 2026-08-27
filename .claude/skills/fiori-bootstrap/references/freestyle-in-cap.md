@@ -1,4 +1,4 @@
-*Part of the fiori-app-bootstrapping skill.*
+*Part of the fiori-bootstrap skill.*
 
 # Freestyle UI5 inside a CAP project
 
@@ -37,7 +37,7 @@ cds watch        # serves OData at /odata/v4/... AND the UI5 app at /myfreestyle
 
 | Setup | `index.html` bootstrap `src` | `ui5.yaml` `framework` block | Startup | Notes |
 |---|---|---|---|---|
-| **A — CDN bootstrap (recommended; matches the reference starter)** | `https://ui5.sap.com/1.120.0/resources/sap-ui-core.js` (absolute CDN URL) | **omit** it | Fast — CAP server starts immediately | Browser pulls UI5 from the SAP CDN. The reference starter uses this. |
+| **A — CDN bootstrap (recommended; matches the reference starter)** | `https://ui5.sap.com/{RECOMMENDED_UI5_VERSION}/resources/sap-ui-core.js` (absolute CDN URL) | **omit** it | Fast — CAP server starts immediately | Browser pulls UI5 from the SAP CDN. The reference starter uses this. |
 | **B — plugin-served runtime** | `resources/sap-ui-core.js` (relative) | **required** — `name: SAPUI5`, `version`, `libraries` | Slow — first run downloads the full SAPUI5 SDK (~1 GB) into `~/.ui5`, and **every** `cds watch` re-validates it | Use only when you need fully offline UI5. |
 
 **The bug to avoid:** a **relative** `src="resources/sap-ui-core.js"` with **NO** `framework` block → the browser requests `/<app>/resources/sap-ui-core.js`, nothing answers → **404 + blank page** (often reported as "sap-ui-core.js not found"). The reference starter pairs the **CDN URL** with **no framework block** — copy that pairing verbatim; do not hand-roll a relative bootstrap.

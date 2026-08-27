@@ -1,4 +1,4 @@
-*Part of the fiori-app-bootstrapping skill.*
+*Part of the fiori-bootstrap skill.*
 
 # External-service-bound app (RAP / existing OData)
 
@@ -7,7 +7,9 @@ When the backend already exists — a RAP service, an S/4HANA OData V4 API, or a
 - **mock** — `sap-fe-mockserver` serves data from the EDMX + local mock data (offline, no backend).
 - **proxy** — `fiori-tools-proxy` forwards requests to the real backend (BAS destination or a URL).
 
-This mirrors `Claude-Code/project1` (bound to the public TripPin V4 service). For the EDMX download/handling and BAS destinations, also see the `destinations-and-services` skill. Clean Core rule: never modify the core service; UI-only annotation tweaks go in a **local** `annotation.xml` (see `fiori-annotations` `references/local-vs-backend-annotations.md`).
+This mirrors `Claude-Code/project1` (bound to the public TripPin V4 service). For the EDMX download/handling and BAS destinations, also see the `cap-integration` skill. Clean Core rule: never modify the core service; UI-only annotation tweaks go in a **local** `annotation.xml` (see `fiori-elements` `references/local-vs-backend-annotations.md`).
+
+> **User-wizard scaffold (RAP via a BTP destination).** When the external service is a RAP service behind a destination in BAS, the project is **not** scaffolded by Intent2App — the developer creates it with the **BAS Fiori Application Generator wizard** (the headless generator is broken in BAS and metadata can't be fetched from a terminal behind a destination). The wizard produces **exactly the layout on this page** — `webapp/localService/mainService/metadata.xml` (the fetched EDMX) and a `manifest.json` dataSource with `localUri` + `annotations: ["localAnnotations"]` — plus `webapp/annotations/annotation.xml` for local UI annotations. Intent2App then reads that `metadata.xml` and builds the UI (List Report annotations) on the existing shell. See the **`rap-integration`** skill for the end-to-end flow.
 
 ## manifest.json — dataSource with localUri + annotations
 

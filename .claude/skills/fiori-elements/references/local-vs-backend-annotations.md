@@ -1,4 +1,4 @@
-*Part of the fiori-annotations skill.*
+*Part of the fiori-elements skill.*
 
 # Local vs backend annotations (RAP / external services)
 

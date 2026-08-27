@@ -11,7 +11,7 @@ description: >
 
 # Unit & Integration Testing
 
-> Complements `cap-best-practices` (service) and `fiori-app-bootstrapping` (UI). For deep OPA5 patterns
+> Complements `cap-skill` (service) and `fiori-bootstrap` (UI). For deep OPA5 patterns
 > use the official `ui5` plugin's `ui5-best-practices-opa5` skill when present. The Documenter uses this
 > skill to fill `templates/UNIT_TESTING_DOCUMENT.md`.
 

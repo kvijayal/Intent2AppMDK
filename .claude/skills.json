@@ -131,6 +131,41 @@
       "source": "local",
       "sourceType": "local",
       "skillPath": "skills/review-quality-checks/SKILL.md"
+    },
+    "mdk-project-setup": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/mdk-project-setup/SKILL.md"
+    },
+    "mdk-bundler-settings": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/mdk-bundler-settings/SKILL.md"
+    },
+    "mdk-cf-mobile-services": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/mdk-cf-mobile-services/SKILL.md"
+    },
+    "mdk-ssam-patterns": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/mdk-ssam-patterns/SKILL.md"
+    },
+    "mdk-cap-integration": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/mdk-cap-integration/SKILL.md"
+    },
+    "mdk-environment-deploy": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/mdk-environment-deploy/SKILL.md"
+    },
+    "mdk-ssam-upgrade": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/mdk-ssam-upgrade/SKILL.md"
     }
   }
 }

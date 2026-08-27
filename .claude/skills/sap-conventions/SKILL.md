@@ -23,7 +23,7 @@ all lowercase:
 Run `mcp__intent2app__validate_namespace` after scaffolding or editing any of these.
 
 ## Tech-stack defaults
-`@sap/cds ^9` · `@ui5/cli ^4` · `cds-plugin-ui5 ^0.16.3` · OData V4 · SAPUI5 1.120+ · theme
+`@sap/cds ^9` · `@ui5/cli ^4` · `cds-plugin-ui5 ^0.17.0` · OData V4 · SAPUI5 1.120+ · theme
 `sap_horizon` · `sap.m.*` controls · TypeScript for freestyle UI5 · CAP Node.js · dev run =
 in-memory sqlite (CAP) / mock server (external/RAP).
 

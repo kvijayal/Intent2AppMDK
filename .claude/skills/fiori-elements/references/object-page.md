@@ -1,4 +1,4 @@
-*Part of the fiori-annotations skill.*
+*Part of the fiori-elements skill.*
 
 # Object Page annotations
 
@@ -111,7 +111,7 @@ Criticality on an action (`![@UI.Criticality]: #Positive` / `#Negative`) colours
 
 ## When annotations aren't enough
 
-For UI that annotations cannot express (e.g. an inverted `ObjectStatus` badge with a descriptive paragraph), add an FPM custom section — see `fiori-app-bootstrapping/references/fpm.md`. Keep pure-data sections as annotations; use extensions only for bespoke presentation.
+For UI that annotations cannot express (e.g. an inverted `ObjectStatus` badge with a descriptive paragraph), add an FPM custom section — see `fiori-bootstrap/references/fpm.md`. Keep pure-data sections as annotations; use extensions only for bespoke presentation.
 
 ## Checklist
 

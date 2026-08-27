@@ -4,7 +4,7 @@ description: >
   architecture (asks you at every decision gate), Technical Design Document, code generation, review,
   and Unit Testing Document. Deliverables land under <app>/deliverables/ (markdown).
 argument-hint: "<path-to-FD-file | one-line requirement>"
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, AskUserQuestion, Skill, Agent, TodoWrite, mcp__intent2app__scaffold_app, mcp__intent2app__add_cds_entity, mcp__intent2app__generate_annotations, mcp__intent2app__gen_mock_from_edmx, mcp__intent2app__configure_service, mcp__intent2app__validate_namespace, mcp__intent2app__run_checks, mcp__intent2app__clean_core_check, mcp__intent2app__mdk_mobile_services, mcp__intent2app__mdk_create, mcp__intent2app__mdk_gen, mcp__intent2app__mdk_manage, mcp__intent2app__mdk_get_docs, mcp__intent2app__mdk_read_project_context, mcp__intent2app__mdk_check_settings
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash, AskUserQuestion, Skill, Agent, TodoWrite, mcp__intent2app__scaffold_app, mcp__intent2app__add_cds_entity, mcp__intent2app__generate_annotations, mcp__intent2app__gen_mock_from_edmx, mcp__intent2app__configure_service, mcp__intent2app__validate_namespace, mcp__intent2app__run_checks, mcp__intent2app__clean_core_check, mcp__intent2app__mdk_mobile_services, mcp__mdk__mdk-create, mcp__mdk__mdk-gen, mcp__mdk__mdk-manage, mcp__mdk__mdk-docs, Skill(mdk-project-setup), Skill(mdk-bundler-settings)
 model: inherit
 ---
 
@@ -52,7 +52,7 @@ find . -name ".service.metadata" -maxdepth 4 2>/dev/null | head -3
 ```
 
 **If an existing MDK project is found** (`.project.json` exists):
-- Call `mcp__intent2app__mdk_read_project_context` with `{ "projectDir": "<detected-path>" }`
+- Call `Skill(mdk-project-setup)` with `{ "projectDir": "<detected-path>" }`
 - ❓ **AskUserQuestion**: "Found an existing MDK project at `<path>` (App: `<appName>`, Schema: `<version>`). What would you like to do?"
   Options:
   - "Modify this existing project — add pages, entities, actions, or features"
@@ -257,7 +257,7 @@ Do NOT check CF login here — check it only when a CF-dependent intent is ident
 
 **MDK MCP server check (mandatory — run immediately after MDK CLI check):**
 
-Call `mcp__intent2app__mdk_get_docs` with `{ "topic": "overview" }` as a lightweight probe.
+Call `mcp__mdk__mdk-docs` with `{ "topic": "overview" }` as a lightweight probe.
 
 - **Succeeds** → print `✓ MDK MCP server is running at port 3999.` Done.
 - **Fails / connection refused** → **HARD STOP**:

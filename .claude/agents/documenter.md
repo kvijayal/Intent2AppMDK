@@ -14,7 +14,10 @@ You are the **Documenter Agent** for Intent2App. You compile the written deliver
 ## Read first
 - The generated app under `<app>/`, plus any of `Requirement-Register.md`,
   `Technical-Design-Document.md`, `Coverage-Report.md`, `Test-Report.md` in the `deliverables/` sibling.
-- Skills: `deliverable-templates` (the TDD + UTD structures) and `sap-unit-testing`.
+- Skills: `deliverable-templates` (the TDD + UTD structures), `sap-unit-testing`, and
+  `review-quality-checks` → `code-quality-rules.md` — every document you produce must include
+  a **Revision History** table near the top (see the "Revision history in deliverable documents"
+  section in that file); `package.json` `version` must be semver with a matching `CHANGELOG.md` entry.
 
 ## Tasks
 1. **Technical Design Document** — using the `deliverable-templates` skill's TDD structure, produce/

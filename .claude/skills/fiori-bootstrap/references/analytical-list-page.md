@@ -1,6 +1,8 @@
-*Part of the fiori-app-bootstrapping skill.*
+*Part of the fiori-bootstrap skill.*
 
 # Analytical List Page (ALP)
+
+> For the OData **V2** generic-template ALP (`sap.suite.ui.generic.template`), see [`bootstrap-alp-v2.md`](bootstrap-alp-v2.md).
 
 The Analytical List Page is a List Report variant that puts a **chart and a table side-by-side (or stacked)** above a shared, content-aware filter bar, with drill-down from the visual to the rows. Use it for "explore-then-act" scenarios where users slice aggregated KPIs before drilling to detail. It is `sap.fe.templates.AnalyticalListPage`.
 
@@ -64,7 +66,7 @@ Start from the LROP manifest (`list-report-op.md`) and change ONLY the List targ
 
 ## Annotation prerequisites (the ALP will not render without these)
 
-ALP needs, at minimum, a `UI.Chart`, a `UI.PresentationVariant` that lists both the chart and the table, and (recommended) a `UI.SelectionPresentationVariant` so the filter defaults travel with the presentation. Define these in `srv/annotations.cds` (see the `fiori-annotations` skill, `references/alp-charts.md`).
+ALP needs, at minimum, a `UI.Chart`, a `UI.PresentationVariant` that lists both the chart and the table, and (recommended) a `UI.SelectionPresentationVariant` so the filter defaults travel with the presentation. Define these in `srv/annotations.cds` (see the `fiori-elements` skill, `references/alp-charts.md`).
 
 ```cds
 annotate PurchaseOrderService.PurchaseOrders with @(

@@ -1,4 +1,4 @@
-*Part of the fiori-annotations skill.*
+*Part of the fiori-elements skill.*
 
 # List Report annotations
 
@@ -79,7 +79,7 @@ Fiori Elements renders this as an `sap.m.ObjectStatus` with the right semantic c
 | `2` | Critical | orange | SUBMITTED / pending |
 | `3` | Positive | green | APPROVED / COMPLETED |
 
-Always pair with `CriticalityRepresentation: #WithIcon`. Compute the integer in a CAP `after('READ')` handler (see `cap-best-practices`); the UI never derives it.
+Always pair with `CriticalityRepresentation: #WithIcon`. Compute the integer in a CAP `after('READ')` handler (see `cap-skill`); the UI never derives it.
 
 ## Column importance (responsive priority)
 

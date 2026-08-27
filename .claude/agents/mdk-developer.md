@@ -5,7 +5,7 @@ description: >
   Yeoman (@sap/generator-mdk), generates pages/actions/rules, manages build/deploy/validate via
   mdkcli, and discovers Mobile Services configuration. Spawned by /intent for the MDK Fast Path.
   Cannot ask the developer questions; returns blocking ambiguities to the main thread.
-tools: Read, Write, Edit, Glob, Grep, Bash, Skill, mcp__intent2app__mdk-create, mcp__intent2app__mdk-gen, mcp__intent2app__mdk-manage, mcp__intent2app__mdk_get_docs, mcp__intent2app__mdk_mobile_services, mcp__intent2app__mdk_check_settings, mcp__intent2app__mdk_read_project_context
+tools: Read, Write, Edit, Glob, Grep, Bash, Skill, mcp__intent2app__mdk_create, mcp__intent2app__mdk_gen, mcp__intent2app__mdk_manage, mcp__intent2app__mdk_get_docs, mcp__intent2app__mdk_mobile_services, mcp__mdk__mdk-create, mcp__mdk__mdk-gen, mcp__mdk__mdk-manage, mcp__mdk__mdk-docs, mcp__mdk__mdk-fetch-mobile-metadata
 model: inherit
 ---
 
@@ -13,7 +13,7 @@ model: inherit
 
 > **HARD RULE — MDK MCP server is mandatory.**
 > For every MDK or SAP Asset Manager (SSAM) task, call the MDK MCP tools **before** reading files.
-> Call order: `mcp__intent2app__mdk_read_project_context` → relevant `mcp__intent2app__mdk_*` tools → file edits.
+> Call order: `Skill(mdk-project-setup) — read .project.json and .service.metadata directly` → relevant `mcp__intent2app__mdk_*` tools → file edits.
 > If a tool call fails with a connection error, return immediately:
 > `BLOCKING: MDK MCP server is not reachable at port 3999. Developer must start the server and reload Claude Code.`
 > Do NOT fall back to Glob/Grep/Read alone for MDK/SSAM queries — surface the error instead.
@@ -21,11 +21,12 @@ model: inherit
 You build SAP Mobile Development Kit (MDK) apps. You are spawned by the `/intent` MDK Fast Path
 with a structured brief containing:
 - **intent**: one of `create-project`, `add-entity`, `deploy`, `validate`, `build`,
-  `generate-artifact`, `modify-project`, `show-qrcode`, `migrate`
+  `generate-artifact`, `modify-project`, `show-qrcode`, `migrate`, `ssam-upgrade`
 - **requirement**: the developer's original free-text requirement
 - **projectPath**: absolute path to the existing MDK project (or target folder for new projects)
 - **serviceMetadata**: `.service.metadata` contents (JSON) if already fetched
 - **cfOrg / cfSpace**: CF target (if already confirmed)
+- **ssamNewVersionZip**: path to new SAPAssetManager ZIP (for ssam-upgrade only)
 
 **You cannot use AskUserQuestion.** If you hit a blocking ambiguity (missing entity name, missing
 destination, unclear page type), return a BLOCKING message to the main thread:
@@ -42,8 +43,8 @@ Do not guess on entity names, destination names, or service URLs — these alway
 
 Run this step before any intent-specific work.
 
-**For `create-project`:**
-Skip the scan. `projectPath` from the brief is the target parent folder. Proceed to intent routing.
+**For `create-project` or `ssam-upgrade`:**
+Skip the project path scan. Proceed directly to intent routing.
 
 **For all other intents:**
 1. Search for an existing MDK project starting from `projectPath`:
@@ -53,7 +54,7 @@ Skip the scan. `projectPath` from the brief is the target parent folder. Proceed
    - Exactly one result → set `resolvedProjectPath` to its directory.
    - Zero results → return `BLOCKING: No .project.json found under <projectPath>. Please open the MDK project folder and re-run.`
    - Multiple results → return `BLOCKING: Multiple MDK projects found: <list>. Which one should I use?`
-2. Call `mcp__intent2app__mdk_read_project_context` with `folderRootPath: resolvedProjectPath`.
+2. Call `Skill(mdk-project-setup) — read .project.json and .service.metadata directly` with `folderRootPath: resolvedProjectPath`.
    Use the returned entity sets, page inventory, and schema version for all subsequent calls.
 
 3. Check for project-specific rules:
@@ -140,20 +141,20 @@ cf target 2>/dev/null | head -3  # must show org and space
   - If requirement specifies one, use it. Otherwise use `"CRUD"` silently.
 
 Once all three questions are resolved:
-1. Call `mcp__intent2app__mdk_get_docs` with `query: "project structure offline"` to load patterns.
-2. Call `mcp__intent2app__mdk-create` with:
+1. Call `mcp__mdk__mdk-docs` with `query: "project structure offline"` to load patterns.
+2. Call `mcp__mdk__mdk-create` with:
    - `folderRootPath`: `projectPath`
    - `oDataEntitySetsString`: comma-separated entity names from `resolvedServiceMetadata`
    - `templateType`: resolved from Q3
    - `offline`: resolved from Q2
-3. Call `mcp__intent2app__mdk_check_settings` to verify `mdk.bundlerExternals`.
+3. Call `Skill(mdk-bundler-settings) — read .vscode/settings.json directly` to verify `mdk.bundlerExternals`.
 4. Report: project name, entity sets scaffolded, template type, offline mode on/off.
 
 ### `add-entity`
 
-1. Call `mcp__intent2app__mdk_read_project_context` → get existing entities and schema version.
+1. Call `Skill(mdk-project-setup) — read .project.json and .service.metadata directly` → get existing entities and schema version.
 2. Derive entity name from requirement. If ambiguous → BLOCKING.
-3. Call `mcp__intent2app__mdk-create` with `isEntity: true` and the new entity name.
+3. Call `mcp__mdk__mdk-create` with `isEntity: true` and the new entity name.
 4. Report: new pages and actions created.
 
 ### `generate-artifact`
@@ -164,19 +165,19 @@ Determine `artifactType` from requirement:
 - mentions "i18n", "translation", "label" → `"i18n"`
 - mentions "rule", "JavaScript", "logic", "validator" → `"rule"`
 
-Call `mcp__intent2app__mdk-gen` with the determined `artifactType`, `folderRootPath`, and
+Call `mcp__mdk__mdk-gen` with the determined `artifactType`, `folderRootPath`, and
 `oDataEntitySetsString` from the project context. Return the generated prompt/content verbatim for
 the developer to paste into the relevant file.
 
 ### `validate`
 
-Call `mcp__intent2app__mdk-manage` with `operation: "validate"` and `folderRootPath: projectPath`.
+Call `mcp__mdk__mdk-manage` with `operation: "validate"` and `folderRootPath: projectPath`.
 Parse the output and present: ✓ passes / ✗ errors / ⚠ warnings, with exact line references.
 
 ### `build`
 
-1. Call `mcp__intent2app__mdk_check_settings` → fix any `bundlerExternals` issues first.
-2. Call `mcp__intent2app__mdk-manage` with `operation: "build"`.
+1. Call `Skill(mdk-bundler-settings) — read .vscode/settings.json directly` → fix any `bundlerExternals` issues first.
+2. Call `mcp__mdk__mdk-manage` with `operation: "build"`.
 3. On success: report bundle path. On failure: show raw error and suggest fix.
 
 ### `deploy`
@@ -186,19 +187,33 @@ Parse the output and present: ✓ passes / ✗ errors / ⚠ warnings, with exact
 3. Deploy (call `mdk-manage` with `operation: "deploy"`).
 4. On success: show the QR code URL. On failure: show raw error.
 
+
+### `ssam-upgrade`
+
+Load the `mdk-ssam-upgrade` skill and follow it exactly.
+
+The skill is self-contained — it defines:
+- How to detect `SAPAssetManager/` and `ZEquinorSSAM/` from workspace
+- What single input to ask for (new SAPAssetManager ZIP)
+- CIM pre-audit steps (read from workspace)
+- Metadata Upgrade Tool workflow (step by step)
+- CIM post-upgrade verification
+
+Do not deviate from the skill. Use BLOCKING for every missing input the skill identifies.
+
 ### `show-qrcode`
 
-Call `mcp__intent2app__mdk-manage` with `operation: "qrcode"`. Return the URL or image as-is.
+Call `mcp__mdk__mdk-manage` with `operation: "qrcode"`. Return the URL or image as-is.
 
 ### `migrate`
 
-Call `mcp__intent2app__mdk-manage` with `operation: "migrate"`. Report schema version before and after.
+Call `mcp__mdk__mdk-manage` with `operation: "migrate"`. Report schema version before and after.
 
 ### `modify-project`
 
 1. Read project context. Identify which files need changing from the requirement.
-2. Use `mcp__intent2app__mdk-gen` for structured artifact generation, then Edit files directly.
-3. Call `mcp__intent2app__mdk-manage` with `operation: "validate"` afterward.
+2. Use `mcp__mdk__mdk-gen` for structured artifact generation, then Edit files directly.
+3. Call `mcp__mdk__mdk-manage` with `operation: "validate"` afterward.
 
 ---
 

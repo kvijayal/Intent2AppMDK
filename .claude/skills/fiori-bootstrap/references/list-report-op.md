@@ -1,6 +1,8 @@
-*Part of the fiori-app-bootstrapping skill.*
+*Part of the fiori-bootstrap skill.*
 
 # List Report + Object Page (LROP)
+
+> Full file-by-file V4/RAP walkthrough: [`bootstrap-list-report-v4.md`](bootstrap-list-report-v4.md).
 
 The default Fiori Elements floorplan: a filterable list (List Report) that navigates to a detail page (Object Page). Both are **separate UIComponents** loaded by the SAPUI5 flexible programming model — you wire them in `manifest.json`; you do not write views or controllers. Live example: `Claude-Code/purchaseOrder/app/purchaseorderlist/webapp/manifest.json`.
 
@@ -30,6 +32,8 @@ The OData V4 service the app binds to. `uri` is the runtime path; for an externa
 
 Bind the **default (unnamed) model** to `mainService`. These four settings are required on every backend-bound app — `autoExpandSelect` lets Fiori Elements request only the fields the annotations reference (including the criticality column), and `earlyRequests` fires the metadata + first data request as soon as possible.
 
+> **Never include `synchronizationMode` in OData V4 model settings.** It was removed in UI5 1.110+ and the UI5 linter flags it as a deprecated error. The OData V4 model manages synchronisation internally. If you see it in generated output, delete it immediately.
+
 ```jsonc
 "models": {
   "": {
@@ -41,6 +45,7 @@ Bind the **default (unnamed) model** to `mainService`. These four settings are r
       "earlyRequests": true,
       "groupId": "$auto",
       "updateGroupId": "$auto"
+      // ❌ "synchronizationMode": "None"  ← NEVER — removed in UI5 1.110+
     }
   },
   "i18n": {
@@ -117,7 +122,7 @@ annotate SupplierOnboardingService.Suppliers with @odata.draft.enabled;
 Decision rule:
 - **Read-only / display app** → draft off is correct (no Create/Edit buttons expected).
 - **Users create or edit records (an input form is in scope)** → **draft on** (recommended), or sticky sessions, or move that screen to a Freestyle form.
-- Never ship a non-draft LROP while a requirement asks for a create/edit form — raise it as a contradiction at Gate D/G6 (see `sap-architecture-decisions/references/decision-gates.md`).
+- Never ship a non-draft LROP while a requirement asks for a create/edit form — raise it as a contradiction at Gate D/G6 (see `sap-architecture/references/decision-gates.md`).
 
 When draft is on, keep the `managed`/`@odata.etag` interplay correct and ensure compositions (e.g. `Addresses`) cascade with the draft. Seed CSVs are unaffected.
 
@@ -125,7 +130,7 @@ When draft is on, keep the `managed`/`@odata.etag` interplay correct and ensure 
 
 ```jsonc
 "dependencies": {
-  "minUI5Version": "1.120.0",
+  "minUI5Version": "{RECOMMENDED_UI5_VERSION}",
   "libs": {
     "sap.ui.core": {},
     "sap.m": {},
@@ -156,7 +161,7 @@ When this floorplan lives inside a CAP project under `app/<name>/`, `cds watch` 
 
    ```html
    <script id="sap-ui-bootstrap"
-       src="https://ui5.sap.com/1.120.0/resources/sap-ui-core.js"
+       src="https://ui5.sap.com/{RECOMMENDED_UI5_VERSION}/resources/sap-ui-core.js"
        data-sap-ui-theme="sap_horizon"
        data-sap-ui-resource-roots='{"com.client.appname": "./"}'
        data-sap-ui-async="true"
@@ -172,7 +177,7 @@ The service `dataSources.uri` stays **relative** (`/odata/v4/...`) — same-orig
 
 ## What drives the UI
 
-The columns, filter fields, header, and sections come entirely from **annotations** (`UI.LineItem`, `UI.SelectionFields`, `UI.HeaderInfo`, `UI.Facets`). The manifest only wires routing/config. See the `fiori-annotations` skill (`references/list-report.md` and `references/object-page.md`).
+The columns, filter fields, header, and sections come entirely from **annotations** (`UI.LineItem`, `UI.SelectionFields`, `UI.HeaderInfo`, `UI.Facets`). The manifest only wires routing/config. See the `fiori-elements` skill (`references/list-report.md` and `references/object-page.md`).
 
 ## Checklist
 

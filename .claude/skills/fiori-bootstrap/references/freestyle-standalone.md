@@ -1,6 +1,8 @@
-*Part of the fiori-app-bootstrapping skill.*
+*Part of the fiori-bootstrap skill.*
 
 # Freestyle UI5 (standalone, TypeScript)
+
+> Full file-set walkthroughs: [`bootstrap-freestyle-typescript.md`](bootstrap-freestyle-typescript.md), [`bootstrap-freestyle-js.md`](bootstrap-freestyle-js.md), [`bootstrap-freestyle-worklist.md`](bootstrap-freestyle-worklist.md).
 
 A freestyle app is hand-built UX: your own XML views, controllers, and `sap.m.routing.Router` — no Fiori Elements templates. Use it when the requirement does not fit a standard floorplan. Intent2App uses **TypeScript** freestyle. Canonical example: `Claude-Code/project1`.
 
