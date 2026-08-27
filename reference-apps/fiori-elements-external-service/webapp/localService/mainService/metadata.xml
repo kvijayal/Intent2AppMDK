@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Sample OData V4 $metadata for the external-service starter. Replace with the real service
+     EDMX (e.g. from a RAP service) using mcp__intent2app__gen_mock_from_edmx. -->
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:DataServices>
+    <Schema Namespace="ExternalService" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <EntityType Name="Product">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Int32" Nullable="false"/>
+        <Property Name="Name" Type="Edm.String" MaxLength="100"/>
+        <Property Name="Category" Type="Edm.String" MaxLength="40"/>
+        <Property Name="UnitPrice" Type="Edm.Decimal" Precision="15" Scale="2"/>
+        <Property Name="Status" Type="Edm.String" MaxLength="20"/>
+        <Property Name="StatusCriticality" Type="Edm.Int32"/>
+      </EntityType>
+      <EntityContainer Name="Container">
+        <EntitySet Name="Products" EntityType="ExternalService.Product"/>
+      </EntityContainer>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>

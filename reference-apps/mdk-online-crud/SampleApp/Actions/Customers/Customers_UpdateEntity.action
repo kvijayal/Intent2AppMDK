@@ -1,0 +1,21 @@
+{
+  "_Type": "Action.Type.ODataService.UpdateEntity",
+  "_Name": "Customers_UpdateEntity",
+  "ActionResult": {
+    "_Name": "updateCustomer"
+  },
+  "Properties": {
+    "FirstName": "#Control:FirstName/#Value",
+    "LastName": "#Control:LastName/#Value",
+    "EmailAddress": "#Control:EmailAddress/#Value",
+    "City": "#Control:City/#Value",
+    "Country": "#Control:Country/#Value"
+  },
+  "Target": {
+    "EntitySet": "Customers",
+    "ReadLink": "{@odata.readLink}",
+    "Service": "/SampleApp/Services/ESPM.service"
+  },
+  "OnSuccess": "/SampleApp/Actions/Customers/Customers_UpdateSuccess.action",
+  "OnFailure": "/SampleApp/Actions/Customers/Customers_UpdateFailed.action"
+}

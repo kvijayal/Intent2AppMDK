@@ -1,0 +1,7 @@
+{
+  "_Type": "Action.Type.ToastMessage",
+  "_Name": "WorkOrders_CreateFailed",
+  "Message": "{{#ActionResults:createWO/#Property:error}}",
+  "Duration": 5,
+  "Animated": true
+}

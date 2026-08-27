@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "Intent2App": {
+      "type": "http",
+      "url": "http://localhost:3999/mcp"
+    }
+  }
+}

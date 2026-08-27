@@ -1,0 +1,9 @@
+{
+    "actions": [
+        {
+            "id": "openReadmeFile",
+            "actionType": "FILE",
+            "uri": "file:///c:/Users/suraj.gahalyan/Downloads/capm-test/cap-fullstack-listreport/.gen/generation.log"
+        }
+    ]
+}

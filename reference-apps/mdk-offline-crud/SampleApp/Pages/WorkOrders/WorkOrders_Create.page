@@ -1,0 +1,62 @@
+{
+  "_Type": "Page",
+  "_Name": "WorkOrders_Create",
+  "Caption": "{i18n>WorkOrders_Create_Caption}",
+  "ActionBar": {
+    "Items": [
+      {
+        "SystemItem": "Cancel",
+        "Position": "Left",
+        "OnPress": "/SampleApp/Actions/CancelPage.action"
+      },
+      {
+        "Caption": "{i18n>Save_Button}",
+        "Position": "Right",
+        "OnPress": "/SampleApp/Actions/WorkOrders/WorkOrders_CheckRequired.action"
+      }
+    ]
+  },
+  "Controls": [
+    {
+      "_Name": "SectionedTable0",
+      "_Type": "Control.Type.SectionedTable",
+      "Sections": [
+        {
+          "_Name": "FormCellSection0",
+          "_Type": "Section.Type.FormCell",
+          "Controls": [
+            {
+              "_Name": "Description",
+              "_Type": "Control.Type.FormCell.SimpleProperty",
+              "Caption": "{i18n>WorkOrders_Description_Label}",
+              "IsEditable": true,
+              "IsRequired": true,
+              "PlaceHolder": "{i18n>WorkOrders_Description_Placeholder}"
+            },
+            {
+              "_Name": "Location",
+              "_Type": "Control.Type.FormCell.SimpleProperty",
+              "Caption": "{i18n>WorkOrders_Location_Label}",
+              "IsEditable": true
+            },
+            {
+              "_Name": "Priority",
+              "_Type": "Control.Type.FormCell.ListPicker",
+              "Caption": "{i18n>WorkOrders_Priority_Label}",
+              "IsEditable": true,
+              "AllowMultipleSelection": false,
+              "Items": "/SampleApp/Rules/WorkOrders/GetPriorityItems.js"
+            },
+            {
+              "_Name": "DueDate",
+              "_Type": "Control.Type.FormCell.DatePicker",
+              "Caption": "{i18n>WorkOrders_DueDate_Label}",
+              "IsEditable": true,
+              "Mode": "Date"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

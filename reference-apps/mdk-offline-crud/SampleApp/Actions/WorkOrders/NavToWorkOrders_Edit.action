@@ -1,0 +1,7 @@
+{
+  "_Type": "Action.Type.Navigation",
+  "_Name": "NavToWorkOrders_Edit",
+  "PageToOpen": "/SampleApp/Pages/WorkOrders/WorkOrders_Edit.page",
+  "ModalPage": true,
+  "ModalPageFullscreen": true
+}

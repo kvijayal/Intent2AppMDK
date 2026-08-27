@@ -1,0 +1,6 @@
+[
+  { "ID": 1, "Name": "Widget",   "Category": "Hardware", "UnitPrice": 19.99, "Status": "APPROVED",  "StatusCriticality": 3 },
+  { "ID": 2, "Name": "Gadget",   "Category": "Hardware", "UnitPrice": 49.50, "Status": "SUBMITTED", "StatusCriticality": 2 },
+  { "ID": 3, "Name": "Gizmo",    "Category": "Software", "UnitPrice": 99.00, "Status": "REJECTED",  "StatusCriticality": 1 },
+  { "ID": 4, "Name": "Sprocket", "Category": "Hardware", "UnitPrice": 5.00,  "Status": "DRAFT",     "StatusCriticality": 0 }
+]

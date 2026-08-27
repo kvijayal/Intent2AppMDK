@@ -1,0 +1,5 @@
+{
+  "_Type": "Action.Type.Navigation",
+  "_Name": "NavToWorkOrders_Detail",
+  "PageToOpen": "/SampleApp/Pages/WorkOrders/WorkOrders_Detail.page"
+}

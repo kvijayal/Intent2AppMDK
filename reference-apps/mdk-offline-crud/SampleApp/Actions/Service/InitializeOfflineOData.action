@@ -1,0 +1,22 @@
+{
+  "_Type": "Action.Type.OfflineOData.Initialize",
+  "_Name": "InitializeOfflineOData",
+  "Service": "/SampleApp/Services/WorkOrderService.service",
+  "ActionResult": {
+    "_Name": "_ODataInit"
+  },
+  "ShowActivityIndicator": true,
+  "ActivityIndicatorText": "{i18n>Initializing_Message}",
+  "DefiningRequests": [
+    {
+      "Name": "OpenWorkOrders",
+      "Query": "WorkOrders?$filter=Status eq 'Open' or Status eq 'InProgress'"
+    },
+    {
+      "Name": "Technicians",
+      "Query": "Technicians"
+    }
+  ],
+  "OnSuccess": "/SampleApp/Actions/Service/DownloadOfflineOData.action",
+  "OnFailure": "/SampleApp/Actions/Service/InitializeFailed.action"
+}

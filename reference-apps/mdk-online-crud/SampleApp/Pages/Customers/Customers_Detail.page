@@ -1,0 +1,62 @@
+{
+  "_Type": "Page",
+  "_Name": "Customers_Detail",
+  "Caption": "{i18n>Customers_Detail_Caption}",
+  "ActionBar": {
+    "Items": [
+      {
+        "Image": "sap-icon://edit",
+        "Position": "Right",
+        "OnPress": "/SampleApp/Actions/Customers/NavToCustomers_Edit.action"
+      },
+      {
+        "Image": "sap-icon://delete",
+        "Position": "Right",
+        "OnPress": "/SampleApp/Actions/Customers/Customers_ConfirmDelete.action"
+      }
+    ]
+  },
+  "Controls": [
+    {
+      "_Name": "SectionedTable0",
+      "_Type": "Control.Type.SectionedTable",
+      "DataSubscriptions": [
+        "Customers"
+      ],
+      "Sections": [
+        {
+          "_Name": "ObjectHeaderSection",
+          "_Type": "Section.Type.ObjectHeader",
+          "ObjectHeader": {
+            "HeadlineText": "{FirstName} {LastName}",
+            "Subhead": "{EmailAddress}",
+            "Footnote": "{PhoneNumber}",
+            "DetailImage": "sap-icon://customer",
+            "DetailImageIsCircular": true
+          }
+        },
+        {
+          "_Name": "SectionKeyValue0",
+          "_Type": "Section.Type.KeyValue",
+          "Header": {
+            "Caption": "{i18n>Details_Header}",
+            "UseTopPadding": false
+          },
+          "KeyAndValues": [
+            {
+              "KeyName": "{i18n>Customers_City_Label}",
+              "Value": "{City}"
+            },
+            {
+              "KeyName": "{i18n>Customers_Country_Label}",
+              "Value": "{Country}"
+            }
+          ],
+          "Layout": {
+            "NumberOfColumns": 2
+          }
+        }
+      ]
+    }
+  ]
+}

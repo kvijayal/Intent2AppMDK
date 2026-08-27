@@ -1,0 +1,7 @@
+{
+  "_Type": "Action.Type.Navigation",
+  "_Name": "NavToWorkOrders_Create",
+  "PageToOpen": "/SampleApp/Pages/WorkOrders/WorkOrders_Create.page",
+  "ModalPage": true,
+  "ModalPageFullscreen": true
+}

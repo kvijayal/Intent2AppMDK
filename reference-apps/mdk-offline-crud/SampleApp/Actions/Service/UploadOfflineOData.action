@@ -1,0 +1,12 @@
+{
+  "_Type": "Action.Type.OfflineOData.Upload",
+  "_Name": "UploadOfflineOData",
+  "Service": "/SampleApp/Services/WorkOrderService.service",
+  "ActionResult": {
+    "_Name": "sync"
+  },
+  "ShowActivityIndicator": true,
+  "ActivityIndicatorText": "{i18n>Syncing_Message}",
+  "OnSuccess": "/SampleApp/Actions/Service/DownloadOfflineOData.action",
+  "OnFailure": "/SampleApp/Actions/Service/SyncFailed.action"
+}

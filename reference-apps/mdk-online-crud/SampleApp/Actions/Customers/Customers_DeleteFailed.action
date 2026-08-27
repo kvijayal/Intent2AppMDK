@@ -1,0 +1,7 @@
+{
+  "_Type": "Action.Type.ToastMessage",
+  "_Name": "Customers_DeleteFailed",
+  "Message": "{{#ActionResults:deleteCustomer/#Property:error}}",
+  "Duration": 5,
+  "Animated": true
+}

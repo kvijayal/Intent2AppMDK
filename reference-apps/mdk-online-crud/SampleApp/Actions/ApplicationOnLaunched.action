@@ -1,0 +1,5 @@
+{
+  "_Type": "Action.Type.Navigation",
+  "_Name": "ApplicationOnLaunched",
+  "PageToOpen": "/SampleApp/Pages/Customers/Customers_List.page"
+}

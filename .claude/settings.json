@@ -1,0 +1,138 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(./**)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "Bash(npm ci)",
+      "Bash(npm run:*)",
+      "Bash(npm test:*)",
+      "Bash(npx ui5lint:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npx tsc:*)",
+      "Bash(cds:*)",
+      "Bash(npx cds:*)",
+      "Bash(fiori run:*)",
+      "Bash(node mcp-server/index.js:*)",
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(npx @sap/mdk-tools validate:*)",
+      "Bash(npx @sap/mdk-tools build:*)",
+      "Bash(npx @sap/mdk-tools deploy:*)",
+      "Bash(npx @sap/mdk-tools migrate:*)",
+      "Bash(cf target)",
+      "Bash(cf login:*)",
+      "mcp__intent2app__scaffold_app",
+      "mcp__intent2app__validate_namespace",
+      "mcp__intent2app__add_cds_entity",
+      "mcp__intent2app__generate_annotations",
+      "mcp__intent2app__gen_mock_from_edmx",
+      "mcp__intent2app__configure_service",
+      "mcp__intent2app__run_checks",
+      "mcp__intent2app__clean_core_check",
+      "mcp__intent2app__create_start_ui",
+      "mcp__intent2app__create_task_ui",
+      "mcp__intent2app__ui5_get_guidelines",
+      "mcp__intent2app__ui5_get_version_info",
+      "mcp__intent2app__ui5_get_api_reference",
+      "mcp__intent2app__ui5_get_project_info",
+      "mcp__intent2app__ui5_run_manifest_validation",
+      "mcp__intent2app__ui5_run_ui5_linter",
+      "mcp__intent2app__cap_search_model",
+      "mcp__intent2app__cap_search_docs",
+      "mcp__intent2app__fiori_search_docs",
+      "mcp__intent2app__fiori_list_apps",
+      "mcp__intent2app__fiori_download_odata_metadata",
+      "mcp__intent2app__mdk_read_project_context",
+      "Bash(npx @sap/mdk-mcp-server:*)",
+      "mcp__intent2app__mdk_check_settings",
+      "mcp__intent2app__mdk_mobile_services",
+      "mcp__mdk-mcp__mdk-create",
+      "mcp__mdk-mcp__mdk-gen",
+      "mcp__mdk-mcp__mdk-manage",
+      "mcp__mdk-mcp__mdk-docs",
+      "mcp__mdk-mcp__mdk-fetch-mobile-metadata",
+      "Bash(*)",
+      "PowerShell(*)",
+      "WebSearch",
+      "WebFetch",
+      "Read",
+      "Glob",
+      "Write",
+      "Edit",
+      "Grep",
+      "Bash(npm ci:*)",
+      "Bash(npm list:*)",
+      "Bash(npm view:*)",
+      "Bash(cds *)",
+      "Bash(mkdir:*)",
+      "Bash(mkdir *)",
+      "Bash(yo:*)",
+      "Bash(mbt:*)",
+      "Bash(code:*)",
+      "Bash(curl:*)",
+      "Bash(netstat:*)",
+      "Bash(cd:*)",
+      "Bash(cd *)",
+      "Bash(ls:*)",
+      "PowerShell(cds: *)",
+      "PowerShell(yo:*)",
+      "PowerShell(Get-ChildItem:*)",
+      "PowerShell($headlessDir:*)",
+      "PowerShell($subGenPath:*)",
+      "PowerShell($subGen:*)",
+      "PowerShell(Get-Process:*)",
+      "PowerShell($base:*)",
+      "PowerShell($configPath:*)",
+      "mcp__Intent2App__scaffold_app",
+      "mcp__Intent2App__validate_namespace",
+      "mcp__Intent2App__add_cds_entity",
+      "mcp__Intent2App__generate_annotations",
+      "mcp__Intent2App__gen_mock_from_edmx",
+      "mcp__Intent2App__configure_service",
+      "mcp__Intent2App__run_checks",
+      "mcp__Intent2App__clean_core_check",
+      "mcp__Intent2App__create_start_ui",
+      "mcp__Intent2App__create_task_ui",
+      "mcp__Intent2App__ui5_get_guidelines",
+      "mcp__Intent2App__ui5_get_version_info",
+      "mcp__Intent2App__ui5_get_api_reference",
+      "mcp__Intent2App__ui5_get_project_info",
+      "mcp__Intent2App__ui5_run_manifest_validation",
+      "mcp__Intent2App__ui5_run_ui5_linter",
+      "mcp__Intent2App__cap_search_model",
+      "mcp__Intent2App__cap_search_docs",
+      "mcp__Intent2App__fiori_search_docs",
+      "mcp__Intent2App__fiori_list_apps",
+      "mcp__Intent2App__fiori_download_odata_metadata"
+    ]
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c \"curl -sf --connect-timeout 1 http://localhost:3999 >/dev/null 2>&1 || (cd mcp-server && npm install --silent 2>/dev/null && nohup npm run start-http >/dev/null 2>&1 &)\""
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"./hooks/review-guard.sh\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": []
+  },
+  "ask": [
+    "Bash(cf *)"
+  ]
+}

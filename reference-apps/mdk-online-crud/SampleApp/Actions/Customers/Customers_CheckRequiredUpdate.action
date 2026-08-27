@@ -1,0 +1,7 @@
+{
+  "_Type": "Action.Type.CheckRequiredFields",
+  "_Name": "Customers_CheckRequiredUpdate",
+  "PageToCheck": "#Page:Customers_Edit",
+  "OnSuccess": "/SampleApp/Actions/Customers/Customers_UpdateEntity.action",
+  "OnFailure": "/SampleApp/Actions/Customers/Customers_ValidationFailed.action"
+}

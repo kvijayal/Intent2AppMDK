@@ -1,0 +1,7 @@
+{
+  "_Type": "Action.Type.ToastMessage",
+  "_Name": "WorkOrders_ValidationFailed",
+  "Message": "{i18n>ValidationFailed_Message}",
+  "Duration": 3,
+  "Animated": true
+}

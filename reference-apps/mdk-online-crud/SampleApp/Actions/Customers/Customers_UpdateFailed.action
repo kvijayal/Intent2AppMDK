@@ -1,0 +1,7 @@
+{
+  "_Type": "Action.Type.ToastMessage",
+  "_Name": "Customers_UpdateFailed",
+  "Message": "{{#ActionResults:updateCustomer/#Property:error}}",
+  "Duration": 5,
+  "Animated": true
+}

@@ -1,0 +1,62 @@
+{
+  "_Type": "Page",
+  "_Name": "WorkOrders_Detail",
+  "Caption": "{i18n>WorkOrders_Detail_Caption}",
+  "ActionBar": {
+    "Items": [
+      {
+        "Image": "sap-icon://edit",
+        "Position": "Right",
+        "OnPress": "/SampleApp/Actions/WorkOrders/NavToWorkOrders_Edit.action"
+      }
+    ]
+  },
+  "Controls": [
+    {
+      "_Name": "SectionedTable0",
+      "_Type": "Control.Type.SectionedTable",
+      "DataSubscriptions": [
+        "WorkOrders"
+      ],
+      "Sections": [
+        {
+          "_Name": "ObjectHeaderSection",
+          "_Type": "Section.Type.ObjectHeader",
+          "ObjectHeader": {
+            "HeadlineText": "{OrderId}",
+            "Subhead": "{Description}",
+            "StatusText": "{Status}",
+            "StatusTextColor": "/SampleApp/Rules/WorkOrders/WorkOrders_StatusColor.js",
+            "DetailImage": "sap-icon://work-history",
+            "DetailImageIsCircular": false
+          }
+        },
+        {
+          "_Name": "SectionKeyValue0",
+          "_Type": "Section.Type.KeyValue",
+          "Header": {
+            "Caption": "{i18n>Details_Header}",
+            "UseTopPadding": false
+          },
+          "KeyAndValues": [
+            {
+              "KeyName": "{i18n>WorkOrders_Location_Label}",
+              "Value": "{Location}"
+            },
+            {
+              "KeyName": "{i18n>WorkOrders_Priority_Label}",
+              "Value": "{Priority}"
+            },
+            {
+              "KeyName": "{i18n>WorkOrders_DueDate_Label}",
+              "Value": "$(D,{DueDate},'',{format:'medium'})"
+            }
+          ],
+          "Layout": {
+            "NumberOfColumns": 2
+          }
+        }
+      ]
+    }
+  ]
+}

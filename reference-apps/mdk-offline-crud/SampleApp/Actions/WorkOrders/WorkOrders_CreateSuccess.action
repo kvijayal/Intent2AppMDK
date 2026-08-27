@@ -1,0 +1,8 @@
+{
+  "_Type": "Action.Type.ToastMessage",
+  "_Name": "WorkOrders_CreateSuccess",
+  "Message": "{i18n>CreateSuccess_Message}",
+  "Duration": 3,
+  "Animated": true,
+  "OnSuccess": "/SampleApp/Actions/CancelPage.action"
+}

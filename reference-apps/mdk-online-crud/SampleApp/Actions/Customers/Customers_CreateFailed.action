@@ -1,0 +1,7 @@
+{
+  "_Type": "Action.Type.ToastMessage",
+  "_Name": "Customers_CreateFailed",
+  "Message": "{{#ActionResults:createCustomer/#Property:error}}",
+  "Duration": 5,
+  "Animated": true
+}

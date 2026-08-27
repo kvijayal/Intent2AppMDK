@@ -1,0 +1,74 @@
+{
+  "_Type": "Page",
+  "_Name": "Customers_Create",
+  "Caption": "{i18n>Customers_Create_Caption}",
+  "ActionBar": {
+    "Items": [
+      {
+        "SystemItem": "Cancel",
+        "Position": "Left",
+        "OnPress": "/SampleApp/Actions/CancelPage.action"
+      },
+      {
+        "Caption": "{i18n>Save_Button}",
+        "Position": "Right",
+        "OnPress": "/SampleApp/Actions/Customers/Customers_CheckRequired.action"
+      }
+    ]
+  },
+  "Controls": [
+    {
+      "_Name": "SectionedTable0",
+      "_Type": "Control.Type.SectionedTable",
+      "Sections": [
+        {
+          "_Name": "FormCellSection0",
+          "_Type": "Section.Type.FormCell",
+          "Controls": [
+            {
+              "_Name": "FirstName",
+              "_Type": "Control.Type.FormCell.SimpleProperty",
+              "Caption": "{i18n>Customers_FirstName_Label}",
+              "IsEditable": true,
+              "IsRequired": true,
+              "PlaceHolder": "{i18n>Customers_FirstName_Placeholder}"
+            },
+            {
+              "_Name": "LastName",
+              "_Type": "Control.Type.FormCell.SimpleProperty",
+              "Caption": "{i18n>Customers_LastName_Label}",
+              "IsEditable": true,
+              "IsRequired": true
+            },
+            {
+              "_Name": "EmailAddress",
+              "_Type": "Control.Type.FormCell.SimpleProperty",
+              "Caption": "{i18n>Customers_Email_Label}",
+              "IsEditable": true,
+              "KeyboardType": "Email"
+            },
+            {
+              "_Name": "PhoneNumber",
+              "_Type": "Control.Type.FormCell.SimpleProperty",
+              "Caption": "{i18n>Customers_Phone_Label}",
+              "IsEditable": true,
+              "KeyboardType": "Phone"
+            },
+            {
+              "_Name": "City",
+              "_Type": "Control.Type.FormCell.SimpleProperty",
+              "Caption": "{i18n>Customers_City_Label}",
+              "IsEditable": true
+            },
+            {
+              "_Name": "Country",
+              "_Type": "Control.Type.FormCell.SimpleProperty",
+              "Caption": "{i18n>Customers_Country_Label}",
+              "IsEditable": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

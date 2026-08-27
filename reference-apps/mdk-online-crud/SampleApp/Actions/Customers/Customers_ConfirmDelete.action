@@ -1,0 +1,9 @@
+{
+  "_Type": "Action.Type.Message",
+  "_Name": "Customers_ConfirmDelete",
+  "Title": "{i18n>Delete_Title}",
+  "Message": "{i18n>Delete_Confirmation}",
+  "OKCaption": "{i18n>Delete_Button}",
+  "CancelCaption": "{i18n>Cancel_Button}",
+  "OnOK": "/SampleApp/Actions/Customers/Customers_DeleteEntity.action"
+}

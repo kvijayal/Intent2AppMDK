@@ -1,0 +1,7 @@
+{
+  "_Type": "Action.Type.CheckRequiredFields",
+  "_Name": "WorkOrders_CheckRequired",
+  "PageToCheck": "#Page:WorkOrders_Create",
+  "OnSuccess": "/SampleApp/Actions/Service/UploadOfflineOData.action",
+  "OnFailure": "/SampleApp/Actions/WorkOrders/WorkOrders_ValidationFailed.action"
+}

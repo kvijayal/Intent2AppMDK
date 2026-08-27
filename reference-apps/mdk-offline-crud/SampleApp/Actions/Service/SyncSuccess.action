@@ -1,0 +1,7 @@
+{
+  "_Type": "Action.Type.ToastMessage",
+  "_Name": "SyncSuccess",
+  "Message": "{i18n>SyncSuccess_Message}",
+  "Duration": 2,
+  "Animated": true
+}

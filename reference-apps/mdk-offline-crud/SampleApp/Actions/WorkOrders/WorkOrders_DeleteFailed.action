@@ -1,0 +1,7 @@
+{
+  "_Type": "Action.Type.ToastMessage",
+  "_Name": "WorkOrders_DeleteFailed",
+  "Message": "{{#ActionResults:deleteWO/#Property:error}}",
+  "Duration": 5,
+  "Animated": true
+}

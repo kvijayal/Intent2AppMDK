@@ -1,0 +1,70 @@
+{
+  "_Type": "Page",
+  "_Name": "Customers_Edit",
+  "Caption": "{i18n>Customers_Edit_Caption}",
+  "ActionBar": {
+    "Items": [
+      {
+        "SystemItem": "Cancel",
+        "Position": "Left",
+        "OnPress": "/SampleApp/Actions/CancelPage.action"
+      },
+      {
+        "Caption": "{i18n>Save_Button}",
+        "Position": "Right",
+        "OnPress": "/SampleApp/Actions/Customers/Customers_CheckRequiredUpdate.action"
+      }
+    ]
+  },
+  "Controls": [
+    {
+      "_Name": "SectionedTable0",
+      "_Type": "Control.Type.SectionedTable",
+      "Sections": [
+        {
+          "_Name": "FormCellSection0",
+          "_Type": "Section.Type.FormCell",
+          "Controls": [
+            {
+              "_Name": "FirstName",
+              "_Type": "Control.Type.FormCell.SimpleProperty",
+              "Caption": "{i18n>Customers_FirstName_Label}",
+              "IsEditable": true,
+              "IsRequired": true,
+              "Value": "{FirstName}"
+            },
+            {
+              "_Name": "LastName",
+              "_Type": "Control.Type.FormCell.SimpleProperty",
+              "Caption": "{i18n>Customers_LastName_Label}",
+              "IsEditable": true,
+              "Value": "{LastName}"
+            },
+            {
+              "_Name": "EmailAddress",
+              "_Type": "Control.Type.FormCell.SimpleProperty",
+              "Caption": "{i18n>Customers_Email_Label}",
+              "IsEditable": true,
+              "Value": "{EmailAddress}",
+              "KeyboardType": "Email"
+            },
+            {
+              "_Name": "City",
+              "_Type": "Control.Type.FormCell.SimpleProperty",
+              "Caption": "{i18n>Customers_City_Label}",
+              "IsEditable": true,
+              "Value": "{City}"
+            },
+            {
+              "_Name": "Country",
+              "_Type": "Control.Type.FormCell.SimpleProperty",
+              "Caption": "{i18n>Customers_Country_Label}",
+              "IsEditable": true,
+              "Value": "{Country}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

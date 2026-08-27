@@ -1,0 +1,21 @@
+{
+  "_Type": "Action.Type.ODataService.CreateEntity",
+  "_Name": "Customers_CreateEntity",
+  "ActionResult": {
+    "_Name": "createCustomer"
+  },
+  "Properties": {
+    "FirstName": "#Control:FirstName/#Value",
+    "LastName": "#Control:LastName/#Value",
+    "EmailAddress": "#Control:EmailAddress/#Value",
+    "PhoneNumber": "#Control:PhoneNumber/#Value",
+    "City": "#Control:City/#Value",
+    "Country": "#Control:Country/#Value"
+  },
+  "Target": {
+    "EntitySet": "Customers",
+    "Service": "/SampleApp/Services/ESPM.service"
+  },
+  "OnSuccess": "/SampleApp/Actions/Customers/Customers_CreateSuccess.action",
+  "OnFailure": "/SampleApp/Actions/Customers/Customers_CreateFailed.action"
+}

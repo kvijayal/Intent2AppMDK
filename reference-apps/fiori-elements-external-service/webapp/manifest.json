@@ -1,0 +1,86 @@
+{
+  "_version": "1.59.0",
+  "sap.app": {
+    "id": "com.intent2app.sample",
+    "type": "application",
+    "i18n": "i18n/i18n.properties",
+    "title": "{{appTitle}}",
+    "description": "{{appDescription}}",
+    "applicationVersion": { "version": "1.0.0" },
+    "dataSources": {
+      "mainService": {
+        "uri": "/odata/v4/external/",
+        "type": "OData",
+        "settings": {
+          "odataVersion": "4.0",
+          "localUri": "localService/mainService/metadata.xml",
+          "annotations": ["localAnnotations"]
+        }
+      },
+      "localAnnotations": {
+        "type": "ODataAnnotation",
+        "uri": "annotations/annotation.xml",
+        "settings": { "localUri": "annotations/annotation.xml" }
+      }
+    }
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "deviceTypes": { "desktop": true, "tablet": true, "phone": true }
+  },
+  "sap.ui5": {
+    "flexEnabled": true,
+    "contentDensities": { "compact": true, "cozy": true },
+    "dependencies": {
+      "minUI5Version": "1.120.0",
+      "libs": {
+        "sap.ui.core": {}, "sap.m": {}, "sap.fe.core": {},
+        "sap.fe.templates": {}, "sap.fe.macros": {}, "sap.uxap": {}, "sap.ui.layout": {}
+      }
+    },
+    "models": {
+      "i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "settings": { "bundleName": "com.intent2app.sample.i18n.i18n" }
+      },
+      "": {
+        "dataSource": "mainService",
+        "type": "sap.ui.model.odata.v4.ODataModel",
+        "settings": {
+          "operationMode": "Server",
+          "autoExpandSelect": true,
+          "earlyRequests": true,
+          "groupId": "$auto",
+          "updateGroupId": "$auto"
+        }
+      }
+    },
+    "routing": {
+      "routes": [
+        { "name": "ProductsList", "pattern": ":?query:", "target": "ProductsList" },
+        { "name": "ProductsObjectPage", "pattern": "Products({key}):?query:", "target": "ProductsObjectPage" }
+      ],
+      "targets": {
+        "ProductsList": {
+          "type": "Component",
+          "id": "ProductsList",
+          "name": "sap.fe.templates.ListReport",
+          "options": {
+            "settings": {
+              "contextPath": "/Products",
+              "variantManagement": "Page",
+              "initialLoad": "Enabled",
+              "navigation": { "Products": { "detail": { "route": "ProductsObjectPage" } } }
+            }
+          }
+        },
+        "ProductsObjectPage": {
+          "type": "Component",
+          "id": "ProductsObjectPage",
+          "name": "sap.fe.templates.ObjectPage",
+          "options": { "settings": { "contextPath": "/Products", "editableHeaderContent": false } }
+        }
+      }
+    }
+  }
+}

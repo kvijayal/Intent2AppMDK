@@ -1,0 +1,7 @@
+{
+  "_Type": "Action.Type.BannerMessage",
+  "_Name": "SyncFailed",
+  "Message": "{i18n>SyncFailed_Message}",
+  "Duration": 7,
+  "Animated": true
+}

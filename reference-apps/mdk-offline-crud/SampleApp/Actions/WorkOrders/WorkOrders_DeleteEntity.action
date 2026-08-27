@@ -1,0 +1,14 @@
+{
+  "_Type": "Action.Type.ODataService.DeleteEntity",
+  "_Name": "WorkOrders_DeleteEntity",
+  "ActionResult": {
+    "_Name": "deleteWO"
+  },
+  "Target": {
+    "EntitySet": "WorkOrders",
+    "ReadLink": "{@odata.readLink}",
+    "Service": "/SampleApp/Services/WorkOrderService.service"
+  },
+  "OnSuccess": "/SampleApp/Actions/WorkOrders/WorkOrders_DeleteSuccess.action",
+  "OnFailure": "/SampleApp/Actions/WorkOrders/WorkOrders_DeleteFailed.action"
+}

@@ -1,0 +1,31 @@
+{
+  "name": "intent2app-freestyle-ui5-ts",
+  "version": "0.0.1",
+  "description": "Intent2App reference starter — Freestyle SAPUI5 (TypeScript) with OPA5 + QUnit, an offline mock server, and proxy-to-backend.",
+  "keywords": ["ui5", "openui5", "sapui5"],
+  "main": "webapp/index.html",
+  "dependencies": {},
+  "devDependencies": {
+    "@ui5/cli": "^4.0.33",
+    "@sap/ux-ui5-tooling": "1",
+    "@sap-ux/eslint-plugin-fiori-tools": "^9.0.0",
+    "eslint": "^9",
+    "@sapui5/types": "~1.146.0",
+    "ui5-tooling-transpile": "^3.10.0",
+    "typescript": "^5.9.3",
+    "@sap-ux/ui5-middleware-fe-mockserver": "2"
+  },
+  "scripts": {
+    "start": "fiori run --open \"index.html\"",
+    "start:proxy": "fiori run --config ./ui5.yaml --open \"index.html\"",
+    "start:mock": "fiori run --config ./ui5-mock.yaml --open \"index.html\"",
+    "start-local": "fiori run --config ./ui5-local.yaml --open \"index.html\"",
+    "build": "ui5 build --config=ui5.yaml --clean-dest --dest dist",
+    "lint": "eslint ./",
+    "ts-typecheck": "tsc --noEmit",
+    "prebuild": "npm run ts-typecheck",
+    "unit-test": "fiori run --config ./ui5-mock.yaml --open \"test/unit/unitTests.qunit.html\"",
+    "int-test": "fiori run --config ./ui5-mock.yaml --open \"test/integration/opaTests.qunit.html\""
+  },
+  "sapuxLayer": "CUSTOMER_BASE"
+}

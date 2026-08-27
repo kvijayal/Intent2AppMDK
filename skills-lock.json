@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "cap-developer": {
+      "source": "capire/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cap-developer/SKILL.md",
+      "computedHash": "f1e7617d6bf5fd01f369458a56236d1f9cf0d0b056783750467aa29a1b6f4f38"
+    }
+  }
+}

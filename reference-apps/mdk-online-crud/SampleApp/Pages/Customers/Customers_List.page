@@ -1,0 +1,55 @@
+{
+  "_Type": "Page",
+  "_Name": "Customers_List",
+  "Caption": "{i18n>Customers_List_Caption}",
+  "ActionBar": {
+    "Items": [
+      {
+        "SystemItem": "Add",
+        "Position": "Right",
+        "OnPress": "/SampleApp/Actions/Customers/NavToCustomers_Create.action"
+      }
+    ]
+  },
+  "Controls": [
+    {
+      "_Name": "SectionedTable0",
+      "_Type": "Control.Type.SectionedTable",
+      "DataSubscriptions": [
+        "Customers"
+      ],
+      "Sections": [
+        {
+          "_Name": "ObjectTable0",
+          "_Type": "Section.Type.ObjectTable",
+          "Search": {
+            "Enabled": true,
+            "Delay": 500,
+            "MinimumCharacterThreshold": 3,
+            "Placeholder": "{i18n>Search_Placeholder}",
+            "BarcodeScanner": false
+          },
+          "ObjectCell": {
+            "Title": "{FirstName} {LastName}",
+            "Subhead": "{EmailAddress}",
+            "Footnote": "{City}",
+            "AccessoryType": "DisclosureIndicator",
+            "OnPress": "/SampleApp/Actions/Customers/NavToCustomers_Detail.action"
+          },
+          "Footer": {
+            "_Name": "CustomersFooter",
+            "AttributeLabel": "/SampleApp/Rules/Customers/Customers_Count.js"
+          },
+          "EmptySection": {
+            "Caption": "{i18n>NoItems}"
+          },
+          "Target": {
+            "EntitySet": "Customers",
+            "Service": "/SampleApp/Services/ESPM.service",
+            "QueryOptions": "$top=20&$orderby=LastName asc"
+          }
+        }
+      ]
+    }
+  ]
+}

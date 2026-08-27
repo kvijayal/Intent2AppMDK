@@ -1,0 +1,136 @@
+{
+  "version": 1,
+  "skills": {
+    "cap-skill": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/cap-skill/SKILL.md"
+    },
+    "cap-integration": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/cap-integration/SKILL.md"
+    },
+    "fiori-elements": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/fiori-elements/SKILL.md"
+    },
+    "fiori-bootstrap": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/fiori-bootstrap/SKILL.md"
+    },
+    "fiori-freestyle": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/fiori-freestyle/SKILL.md"
+    },
+    "sap-architecture": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/sap-architecture/SKILL.md"
+    },
+    "sap-clean-core": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/sap-clean-core/SKILL.md"
+    },
+    "sap-conventions": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/sap-conventions/SKILL.md"
+    },
+    "sap-unit-testing": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/sap-unit-testing/SKILL.md"
+    },
+    "application-sanity-check": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/application-sanity-check/SKILL.md"
+    },
+    "deliverable-templates": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/deliverable-templates/SKILL.md"
+    },
+    "procode-extensibility": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/procode-extensibility/SKILL.md"
+    },
+    "mdk-patterns": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/mdk-patterns/SKILL.md"
+    },
+    "mdk-rules-library": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/mdk-rules-library/SKILL.md"
+    },
+    "mdk-best-practices": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/mdk-best-practices/SKILL.md"
+    },
+    "mdk-migration": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/mdk-migration/SKILL.md"
+    },
+    "mdk-offline-resilience": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/mdk-offline-resilience/SKILL.md"
+    },
+    "mdk-app-update": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/mdk-app-update/SKILL.md"
+    },
+    "cap-developer": {
+      "source": "capire/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cap-developer/SKILL.md",
+      "computedHash": "f1e7617d6bf5fd01f369458a56236d1f9cf0d0b056783750467aa29a1b6f4f38"
+    },
+    "deployment-checklist": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/deployment-checklist/SKILL.md"
+    },
+    "deployment-validation": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/deployment-validation/SKILL.md"
+    },
+    "i18n-completeness": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/i18n-completeness/SKILL.md"
+    },
+    "launchpad-workzone": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/launchpad-workzone/SKILL.md"
+    },
+    "mta-reviewer": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/mta-reviewer/SKILL.md"
+    },
+    "rap-integration": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/rap-integration/SKILL.md"
+    },
+    "review-quality-checks": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/review-quality-checks/SKILL.md"
+    }
+  }
+}

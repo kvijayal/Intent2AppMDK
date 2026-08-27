@@ -1,0 +1,20 @@
+{
+  "_Type": "Action.Type.ODataService.CreateEntity",
+  "_Name": "WorkOrders_CreateEntity",
+  "ActionResult": {
+    "_Name": "createWO"
+  },
+  "Properties": {
+    "Description": "#Control:Description/#Value",
+    "Location": "#Control:Location/#Value",
+    "Priority": "#Control:Priority/#SelectedValue",
+    "DueDate": "#Control:DueDate/#Value",
+    "Status": "Open"
+  },
+  "Target": {
+    "EntitySet": "WorkOrders",
+    "Service": "/SampleApp/Services/WorkOrderService.service"
+  },
+  "OnSuccess": "/SampleApp/Actions/WorkOrders/WorkOrders_CreateSuccess.action",
+  "OnFailure": "/SampleApp/Actions/WorkOrders/WorkOrders_CreateFailed.action"
+}

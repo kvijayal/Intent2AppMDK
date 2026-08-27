@@ -1,0 +1,62 @@
+{
+  "_Type": "Page",
+  "_Name": "WorkOrders_List",
+  "Caption": "{i18n>WorkOrders_List_Caption}",
+  "ActionBar": {
+    "Items": [
+      {
+        "SystemItem": "Add",
+        "Position": "Right",
+        "OnPress": "/SampleApp/Actions/WorkOrders/NavToWorkOrders_Create.action"
+      },
+      {
+        "Image": "sap-icon://synchronize",
+        "Position": "Right",
+        "OnPress": "/SampleApp/Actions/Service/UploadOfflineOData.action"
+      }
+    ]
+  },
+  "Controls": [
+    {
+      "_Name": "SectionedTable0",
+      "_Type": "Control.Type.SectionedTable",
+      "DataSubscriptions": [
+        "WorkOrders"
+      ],
+      "Sections": [
+        {
+          "_Name": "ObjectTable0",
+          "_Type": "Section.Type.ObjectTable",
+          "Search": {
+            "Enabled": true,
+            "Delay": 500,
+            "MinimumCharacterThreshold": 3,
+            "Placeholder": "{i18n>Search_Placeholder}",
+            "BarcodeScanner": true
+          },
+          "ObjectCell": {
+            "Title": "{OrderId}",
+            "Subhead": "{Description}",
+            "Footnote": "{Location}",
+            "StatusText": "{Status}",
+            "StatusTextColor": "/SampleApp/Rules/WorkOrders/WorkOrders_StatusColor.js",
+            "AccessoryType": "DisclosureIndicator",
+            "OnPress": "/SampleApp/Actions/WorkOrders/NavToWorkOrders_Detail.action"
+          },
+          "Footer": {
+            "_Name": "WorkOrdersFooter",
+            "AttributeLabel": "/SampleApp/Rules/WorkOrders/WorkOrders_Count.js"
+          },
+          "EmptySection": {
+            "Caption": "{i18n>NoItems}"
+          },
+          "Target": {
+            "EntitySet": "WorkOrders",
+            "Service": "/SampleApp/Services/WorkOrderService.service",
+            "QueryOptions": "$top=20&$orderby=DueDate asc"
+          }
+        }
+      ]
+    }
+  ]
+}

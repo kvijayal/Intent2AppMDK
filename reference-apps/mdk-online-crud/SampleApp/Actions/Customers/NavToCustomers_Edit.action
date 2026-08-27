@@ -1,0 +1,7 @@
+{
+  "_Type": "Action.Type.Navigation",
+  "_Name": "NavToCustomers_Edit",
+  "PageToOpen": "/SampleApp/Pages/Customers/Customers_Edit.page",
+  "ModalPage": true,
+  "ModalPageFullscreen": true
+}

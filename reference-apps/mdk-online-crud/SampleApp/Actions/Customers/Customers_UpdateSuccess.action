@@ -1,0 +1,8 @@
+{
+  "_Type": "Action.Type.ToastMessage",
+  "_Name": "Customers_UpdateSuccess",
+  "Message": "{i18n>UpdateSuccess_Message}",
+  "Duration": 3,
+  "Animated": true,
+  "OnSuccess": "/SampleApp/Actions/CancelPage.action"
+}

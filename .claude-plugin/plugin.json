@@ -1,0 +1,7 @@
+{
+  "name": "intent2app",
+  "version": "0.2.0",
+  "description": "Orchestrator-driven, Clean-Core-aligned SAP BTP build framework. CAP (CAPM) + UI (Fiori Elements + Freestyle UI5) + MDK (Mobile Development Kit). From a requirement to a runnable, code-verified app with Technical Design and Unit Testing Document.",
+  "author": { "name": "Intent2App" },
+  "keywords": ["sap", "cap", "capm", "fiori", "ui5", "mdk", "mobile", "btp", "clean-core", "odata", "mobile-development-kit"]
+}

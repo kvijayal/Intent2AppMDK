@@ -1,0 +1,24 @@
+{
+  "name": "intent2app-fiori-elements-external-service",
+  "version": "1.0.0",
+  "description": "Intent2App reference starter — Fiori Elements bound to an external/RAP OData service via EDMX, with an offline mock and proxy-to-backend.",
+  "keywords": ["ui5", "sapui5", "fiori-elements", "odata"],
+  "main": "webapp/index.html",
+  "dependencies": {},
+  "devDependencies": {
+    "@ui5/cli": "^4.0.33",
+    "@sap/ux-ui5-tooling": "1",
+    "@sap-ux/eslint-plugin-fiori-tools": "^9.0.0",
+    "eslint": "^9",
+    "@sapui5/types": "~1.146.0",
+    "@sap-ux/ui5-middleware-fe-mockserver": "2"
+  },
+  "scripts": {
+    "start": "fiori run --config ./ui5-mock.yaml --open \"index.html\"",
+    "start:mock": "fiori run --config ./ui5-mock.yaml --open \"index.html\"",
+    "start:proxy": "fiori run --config ./ui5.yaml --open \"index.html\"",
+    "build": "ui5 build --config=ui5.yaml --clean-dest --dest dist",
+    "lint": "eslint ./"
+  },
+  "sapuxLayer": "CUSTOMER_BASE"
+}
