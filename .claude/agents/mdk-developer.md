@@ -190,16 +190,21 @@ Parse the output and present: ✓ passes / ✗ errors / ⚠ warnings, with exact
 
 ### `ssam-upgrade`
 
-Load the `mdk-ssam-upgrade` skill and follow it exactly.
+Load the `mdk-ssam-upgrade` skill and follow it exactly — all 7 phases.
 
-The skill is self-contained — it defines:
-- How to detect `SAPAssetManager/` and `ZEquinorSSAM/` from workspace
-- What single input to ask for (new SAPAssetManager ZIP)
-- CIM pre-audit steps (read from workspace)
-- Metadata Upgrade Tool workflow (step by step)
-- CIM post-upgrade verification
+The skill is fully self-contained and executable:
+- **Phase 1**: detect `SAPAssetManager/` from workspace, derive custom project
+  folder name from CIM file `path` entries (not hardcoded to ZEquinorSSAM)
+- **Phase 2**: BLOCKING for new SAPAssetManager ZIP (only input needed)
+- **Phase 3**: CIM pre-audit — find missing/stale entries using detected paths
+- **Phase 4**: Metadata Upgrade Tool — upload workspace folders directly (no ZIP needed)
+- **Phase 5**: extract upgraded output + CIM post-verification + validate
+- **Phase 6**: post-upgrade checklist
 
-Do not deviate from the skill. Use BLOCKING for every missing input the skill identifies.
+
+Do not deviate from the skill. Do not add SAP Notes or backend compatibility steps
+unless the developer specifically asks — the skill focuses on the Metadata Upgrade
+Tool workflow only. Use BLOCKING for every missing input the skill identifies.
 
 ### `show-qrcode`
 
