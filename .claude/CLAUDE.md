@@ -117,6 +117,7 @@ Do NOT fall back to file-system tools for MDK/SSAM questions — surface the err
 | CF login, region setup, Mobile Services configuration | `mdk-cf-mobile-services` skill |
 | SSAM project conventions, CIM file, ZEquinorSSAM folder | `mdk-ssam-patterns` skill |
 | SSAM version upgrade, Metadata Upgrade Tool, merge conflicts | `mdk-ssam-upgrade` skill |
+| SSAM Upgrade or Customize interactive workflow (from /intent) | `mdk-ssam-workflow` skill — SSAM project structure templates, CIM creation, Z project scaffolding, override patterns, Z naming, validation checklist |
 | CAP backend + MDK mobile frontend full-stack | `mdk-cap-integration` skill |
 | Multi-environment deploy, device onboarding, QR code, CI/CD | `mdk-environment-deploy` skill |
 

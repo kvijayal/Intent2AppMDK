@@ -338,15 +338,10 @@ Result: 2305 base + only your custom changes applied on top
 import shutil
 
 def upgrade_custom_rule(old_sap, custom_file, new_sap):
-    """
-    Merge result is always written back to the custom project file.
-    custom_file path is e.g. ./ZEquinorSSAM/Rules/WorkOrders/WorkOrders_Detail.js
-    """
-    # Ensure the custom project directory exists
-    os.makedirs(os.path.dirname(custom_file), exist_ok=True)
 
-    # Check if developer made any custom changes at all
-    delta = subprocess.run(["diff", old_sap, custom_file], capture_output=True)
+        os.makedirs(os.path.dirname(custom_file), exist_ok=True)
+
+        delta = subprocess.run(["diff", old_sap, custom_file], capture_output=True)
     if delta.returncode == 0:
         # No custom changes — take new SAP file, save to custom project
         shutil.copy(new_sap, custom_file)
@@ -431,7 +426,6 @@ Run the CIM auto-merge from Phase 4:
 
 **Step 5 — Verify and validate:**
 ```bash
-# Confirm no custom files are missing
 find ./<CUSTOM_DIR>/Rules -name "*.js" | sort > /tmp/rules_after.txt
 grep -o 'path="[^"]*"' <CIM_FILE> | grep -v SAPAssetManager | \
   sed 's/path=".*\/\([^/]*\)\.js"/\1/' | sort > /tmp/cim_after.txt

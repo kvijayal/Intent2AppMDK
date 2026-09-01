@@ -102,6 +102,7 @@ Do NOT fall back to file-system tools for MDK/SSAM questions — surface the err
 | New MDK project (any type) | `mdk-patterns` skill — 6-phase workflow (env → scaffold → service → UI → rules → deploy) |
 | MDK page / action / rule schemas | `mdk-patterns` skill — Phase 4 & 5 patterns |
 | MDK build & deploy to Mobile Services | `mdk-patterns` skill — Phase 6 |
+| SSAM Upgrade or Customize interactive workflow (from /intent) | `mdk-ssam-workflow` skill — SSAM project structure templates, CIM creation, Z project scaffolding, override patterns, Z naming, validation checklist |
 
 ---
 
