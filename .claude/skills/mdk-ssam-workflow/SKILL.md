@@ -123,15 +123,29 @@ When the user approves creating a new Z/custom project from scratch:
 
 ### Folder structure to create
 
+Mirror the **complete** SAPAssetManager/ folder tree — never hardcode folder names.
+A real SSAM project contains Actions/, Pages/, Rules/, Services/, Styles/, i18n/,
+Formatters/, Converters/, and entity-specific subfolders inside each.
+
 ```bash
-# Replace ZCustomProject with the agreed project name
-Z_PROJECT="ZCustomProject"
-mkdir -p "$Z_PROJECT/Rules"
-mkdir -p "$Z_PROJECT/Pages"
-mkdir -p "$Z_PROJECT/Actions"
-mkdir -p "$Z_PROJECT/i18n"
-echo "Z project structure created at: $Z_PROJECT"
+# Z_PROJECT = agreed project name (e.g. ZEquinorSSAM)
+# SAP_DIR   = path to SAPAssetManager/ in workspace
+
+# Mirror only top-level folders from SAPAssetManager/
+# Entity subfolders (e.g. Rules/WorkOrders/) are created on demand
+# when override files are placed there during customisation.
+for src_dir in "$SAP_DIR"/*/; do
+  folder=$(basename "$src_dir")
+  mkdir -p "$Z_PROJECT/$folder"
+  echo "✅ $Z_PROJECT/$folder"
+done
+
+echo "Z project created at: $Z_PROJECT"
 ```
+
+This creates the top-level folders that exist in SAPAssetManager/ —
+typically: `Actions/`, `Pages/`, `Rules/`, `Services/`, `Styles/`, `i18n/`,
+and any others present in the installed SSAM version.
 
 ### Minimal CIM file for new Z project
 
@@ -239,7 +253,7 @@ echo "Z target:     $zProjectDir/$RELATIVE"
 After any SSAM customization (override or new artifact):
 
 - [ ] Modified file is in `$zProjectDir/` — confirmed with `ls -la "$Z_FILE"`
-- [ ] `SAPAssetManager/` is unchanged — `git diff --name-only | grep SAPAssetManager` returns nothing
+- [ ] `SAPAssetManager/` is unchanged — verify no files were written there
 - [ ] CIM entry added/exists for every modified or new Z artifact
 - [ ] CIM entry `name` matches the filename (without extension) exactly (case-sensitive)
 - [ ] Relative folder structure matches the standard project structure

@@ -166,6 +166,11 @@
       "source": "local",
       "sourceType": "local",
       "skillPath": "skills/mdk-ssam-upgrade/SKILL.md"
+    },
+    "mdk-ssam-workflow": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/mdk-ssam-workflow/SKILL.md"
     }
   }
 }

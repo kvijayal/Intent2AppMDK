@@ -14,9 +14,6 @@
       "Bash(npx cds:*)",
       "Bash(fiori run:*)",
       "Bash(node mcp-server/index.js:*)",
-      "Bash(git status)",
-      "Bash(git diff:*)",
-      "Bash(git log:*)",
       "Bash(npx @sap/mdk-tools validate:*)",
       "Bash(npx @sap/mdk-tools build:*)",
       "Bash(npx @sap/mdk-tools deploy:*)",
@@ -107,7 +104,23 @@
       "mcp__intent2app__mdk_create",
       "mcp__intent2app__mdk_gen",
       "mcp__intent2app__mdk_manage",
-      "mcp__intent2app__mdk_get_docs"
+      "mcp__intent2app__mdk_get_docs",
+      "MultiEdit",
+      "Read(**)",
+      "Write(**)",
+      "Edit(**)",
+      "Write(./**)",
+      "Edit(./**)",
+      "Read(C:\\\\**)",
+      "Write(C:\\\\**)",
+      "Edit(C:\\\\**)",
+      "Read(/c/**)",
+      "Write(/c/**)",
+      "Edit(/c/**)",
+      "Bash(node:*)",
+      "Bash(node *)",
+      "Bash(git merge-file:*)",
+      "Bash(git --version)"
     ]
   },
   "hooks": {
@@ -132,7 +145,17 @@
         ]
       }
     ],
-    "PostToolUse": []
+    "PostToolUse": [],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"./hooks/compact-reminder.sh\""
+          }
+        ]
+      }
+    ]
   },
   "ask": [
     "Bash(cf *)"

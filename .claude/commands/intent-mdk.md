@@ -1,8 +1,14 @@
 # MDK Intent — Fast Path
 
-*Loaded only when MDK is selected in /intent. Not loaded for CAP/Fiori/UI5 flows.*
+*Can be called directly as `/intent-mdk` or loaded by `/intent` when MDK is selected.*
 
-## MDK Fast Path (only when MDK is selected in STEP 0-A, or when existing MDK project is detected)
+## Entry point
+
+**If `$ARGUMENTS` is provided** (e.g. `/intent-mdk "upgrade SSAM"`) → use it as the requirement, skip STEP 2 question, proceed to STEP 3.
+
+**If called with no arguments** → start from STEP 1 below (same experience as selecting MDK in `/intent`).
+
+## MDK Fast Path
 
 **Do not run STEP 0–9 for MDK. Use only this section.**
 
@@ -50,25 +56,30 @@ Call `mcp__mdk__mdk-docs` with `{ "topic": "overview" }` as a lightweight probe.
 **2a. If entering from a new MDK selection (no existing project):**
 
 If `$ARGUMENTS` already contains a specific MDK requirement, use it directly without asking.
-Otherwise use ❓ **AskUserQuestion**:
+Otherwise use ONE `AskUserQuestion` with all options combined:
 
-Q1: "What would you like to do?"
+```
+Q: "What would you like to do?"
 Options:
   - "Create a new MDK app"
   - "Modify an existing MDK project"
   - "Deploy my MDK app"
   - "Validate / build my MDK project"
+  - "Upgrade SAP Asset Manager (SSAM) to a new version"
+  - "Customize SAP Asset Manager (SSAM) — add overrides or new features"
+```
 
-Q2: "Describe what you want to build" (if Q1 = Create new)
-Options:
-  - "Field Service (Work Orders, Equipment, Technicians) — technicians view and update work orders, equipment inspection, service history"
-  - "Inventory / Warehouse (Products, Stock, Locations) — warehouse workers view stock levels, scan barcodes, transfer inventory"
-  - "Inspection / Quality (Checklists, Findings, Photos) — inspectors complete structured checklists, capture photos, submit findings offline"
-  - "Other — I will describe it myself"
+If user selects **"Upgrade SAP Asset Manager"** or **"Customize SAP Asset Manager"**:
+→ intent is identified immediately (`ssam-upgrade` or `ssam-customize`)
+→ skip to STEP 5 — spawn agent directly with that intent
+→ **do NOT ask further sub-questions in the main flow**
+→ the `mdk-developer` agent handles all further questions via BLOCKING
+
+If user selects one of the other options → proceed to STEP 3 to identify intent.
 
 **2c. If entering from an existing project detection (STEP 0-A):**
 
-The project context is already loaded. Skip straight to STEP 3 using the project context as input. No need to ask for requirement — the intent is already known from the developer's selection in STEP 0-A.
+Skip straight to STEP 3 using the project context. No need to ask for requirement.
 
 ---
 
@@ -87,6 +98,7 @@ Classify the requirement into exactly one intent:
 | `modify-project` | "modify", "update", "change", "fix", "add to existing" | None |
 | `show-qrcode` | "qr code", "onboard device", "scan" | None |
 | `migrate` | "migrate", "upgrade schema", "update schema version" | None |
+| `ssam-upgrade` | "upgrade SSAM", "SSAM new version", "upgrade asset manager", "Metadata Upgrade Tool", "SSAM 2305", "SSAM 2210", "merge SSAM", "new SAPAssetManager version" | New SAPAssetManager ZIP (one input) |
 
 Print the identified intent: `"Identified intent: **[intent]** — proceeding."`
 
@@ -103,9 +115,11 @@ cf target 2>/dev/null | grep "org:" && echo "CF_AUTH=ok" || echo "CF_AUTH=not_lo
 - Logged in → extract `cfOrg` and `cfSpace`, print `✓ CF target: <org> / <space>.`
 - Not logged in → **HARD STOP**: "CF login required. Open a terminal and run `cf login -a https://api.cf.<region>.hana.ondemand.com --sso`, then re-run /intent."
 
+**For `ssam-upgrade` and `ssam-customize`:** skip CF check and workspace scan entirely. Pass the current working directory as `projectDir` to the agent. The agent handles all path resolution via BLOCKING — never hard-stop in the main flow for these intents.
+
 **For all other intents (validate, build, generate, modify, add-entity, show-qrcode, migrate):** skip this step entirely — no CF check needed.
 
-**Everything else** (workspace scan for existing project, Mobile Services app/destination discovery, entity set selection, template type, online vs offline mode) is handled entirely by the `mdk-developer` agent via BLOCKING messages. Do not ask the developer about these in the main flow.
+**Everything else** (workspace scan, Mobile Services discovery, entity sets, template type, online/offline mode) is handled by the `mdk-developer` agent via BLOCKING. Do not ask the developer about these in the main flow.
 
 ---
 

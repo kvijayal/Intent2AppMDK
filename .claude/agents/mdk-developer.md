@@ -43,8 +43,15 @@ Do not guess on entity names, destination names, or service URLs — these alway
 
 Run this step before any intent-specific work.
 
-**For `create-project` or `ssam-upgrade`:**
+**For `ssam-upgrade` or `ssam-customize`:**
+Skip ALL of Step 0 entirely — no project path scan, no CLAUDE.md check, no folder inspection.
+Go directly to intent routing. The `mdk-ssam-upgrade` / `mdk-ssam-patterns` skill
+handles all workspace detection internally via BLOCKING.
+
+**For `create-project`:**
 Skip the project path scan. Proceed directly to intent routing.
+
+**For all other intents:**
 
 **For all other intents:**
 1. Search for an existing MDK project starting from `projectPath`:
@@ -190,21 +197,29 @@ Parse the output and present: ✓ passes / ✗ errors / ⚠ warnings, with exact
 
 ### `ssam-upgrade`
 
-Load the `mdk-ssam-upgrade` skill and follow it exactly — all 7 phases.
+Load `mdk-ssam-upgrade` skill (upgrade phases) and `mdk-ssam-workflow` skill
+(Z project structure, CIM format, override patterns). Follow `mdk-ssam-upgrade` exactly.
 
-The skill is fully self-contained and executable:
-- **Phase 1**: detect `SAPAssetManager/` from workspace, derive custom project
-  folder name from CIM file `path` entries (not hardcoded to ZEquinorSSAM)
-- **Phase 2**: BLOCKING for new SAPAssetManager ZIP (only input needed)
-- **Phase 3**: CIM pre-audit — find missing/stale entries using detected paths
-- **Phase 4**: Metadata Upgrade Tool — upload workspace folders directly (no ZIP needed)
-- **Phase 5**: extract upgraded output + CIM post-verification + validate
-- **Phase 6**: post-upgrade checklist
+**Execution rules:**
+- **Git not required** — upgrade creates new files using pure Node.js only. No git, no merge-file, no external tools needed.
+- Run all detection scripts silently — do not ask user to confirm each step
+- Show the user only: BLOCKING questions, phase completion confirmations, and errors
+- Each phase runs its script once and reports a single summary line to the user
+- Only stop and ask when a BLOCKING condition is reached
 
+**What the skills handle automatically:**
+- `mdk-ssam-upgrade` Phase 1: detect `SAPAssetManager/` and CIM, derive custom project
+  name from CIM `path` entries — never hardcoded
+- If custom folder not found: offer user two options (provide path OR create new Z project)
+- If "create" chosen: use `mdk-ssam-workflow` Z project template to scaffold full folder
+  structure mirroring `SAPAssetManager/` (Pages/, Rules/, Actions/, i18n/, and all subfolders)
+- Phase 3: CIM pre-audit using detected paths
+- Phase 5 Step 3b: add CIM `IntegrationPoints` entries for every upgraded file
+- Phase 4: Metadata Upgrade Tool (no ZIP prep — tool reads folders directly)
+- Phase 6: post-upgrade checklist + deploy
 
-Do not deviate from the skill. Do not add SAP Notes or backend compatibility steps
-unless the developer specifically asks — the skill focuses on the Metadata Upgrade
-Tool workflow only. Use BLOCKING for every missing input the skill identifies.
+Do not deviate from the skills. Do not add SAP Notes unless specifically asked.
+Use BLOCKING for every missing input — never guess project paths or folder names.
 
 ### `show-qrcode`
 
