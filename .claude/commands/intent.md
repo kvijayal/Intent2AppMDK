@@ -62,7 +62,13 @@ find . -name "*.CIM" -maxdepth 6 2>/dev/null | head -3
 **If an existing MDK project is found** (`.project.json` exists):
 - Call `Skill(mdk-project-setup)` with `{ "projectDir": "<detected-path>" }`
 - **Check if this is a SAP Asset Manager project:** use the scan results above — if a `SAPAssetManager/` directory OR a `.CIM` file was detected anywhere in the workspace, this is an SSAM project.
-  - **SSAM project detected** → jump directly to **SSAM Workflow STEP S1** (do NOT show the standard Standalone MDK options below).
+  - **SSAM project detected** → ❓ **AskUserQuestion**: "SAP Asset Manager project detected. What would you like to do?"
+    Options:
+    - "Upgrade to a new SSAM version"
+    - "Customize / add enhancements to the existing project"
+
+    - **Upgrade** → jump to SSAM Upgrade Flow (spawn agent immediately)
+    - **Customize** → jump to SSAM Customize Flow (spawn agent immediately)
   - **Not an SSAM project** → show the standard Standalone MDK options:
 - ❓ **AskUserQuestion**: "Found an existing MDK project at `<path>` (App: `<appName>`, Schema: `<version>`). What would you like to do?"
   Options:
@@ -71,15 +77,19 @@ find . -name "*.CIM" -maxdepth 6 2>/dev/null | head -3
   - "Generate new pages or actions for an entity in this project"
 - Jump to MDK Fast Path STEP 2c, passing `projectDir` and project context — skip STEP 1 and Mobile Services setup.
 
-**If no existing project found** → ❓ **AskUserQuestion** (Question 1 of 2 — top-level app type only; do NOT include SAP Asset Manager here):
-"What type of app are you building?"
+**If no existing project found** → ❓ **AskUserQuestion** (single question — all options including SSAM):
+"What would you like to do?"
   Options:
-  - "CAP / Fiori / UI5 — backend service, Fiori Elements, or freestyle UI5 on BTP (Recommended)"
-  - "MDK — mobile app for iOS/Android via SAP Mobile Development Kit"
+  - "Build a new CAP / Fiori / UI5 app on BTP"
+  - "Build a new MDK mobile app"
+  - "Upgrade SAP Asset Manager (SSAM) to a new version"
+  - "Customize / enhance an existing SAP Asset Manager (SSAM) project"
 
-**Route Question 1 answer:**
-
-- **CAP / Fiori / UI5 selected** → proceed to PRE-FLIGHT 4 (Yeoman + CDS checks) and then STEP 0.
+**Route answer:**
+- **CAP / Fiori / UI5** → proceed to PRE-FLIGHT 4 then STEP 0
+- **New MDK app** → jump to MDK Fast Path STEP 1
+- **Upgrade SSAM** → jump to SSAM Upgrade Flow (spawn agent immediately — no further questions)
+- **Customize SSAM** → jump to SSAM Customize Flow (spawn agent immediately — no further questions)PRE-FLIGHT 4 (Yeoman + CDS checks) and then STEP 0.
 - **MDK selected** → **STOP. Do not proceed yet.** First ask Question 2 (a separate, follow-up question):
 
   ❓ **AskUserQuestion** (Question 2 of 2 — only asked after MDK is selected above):

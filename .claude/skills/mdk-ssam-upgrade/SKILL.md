@@ -318,230 +318,270 @@ Download the upgraded metadata ZIP from the tool.
 
 ---
 
-## Phase 5 — Upgrade custom files, auto-merge CIM, and verify
+## Phase 5 — Upgrade custom files and produce output ZIP
 
-**All scripts run silently using Node.js. No bash commands. No user confirmation per step.**
+**The existing custom project is never modified.**
+All upgraded files are written to a temp folder and packaged into a new ZIP.
+The developer unzips this alongside the new SAPAssetManager version.
 
 **Step 1 — Extract new SAPAssetManager from ZIP:**
 
 ```javascript
-const AdmZip = require("adm-zip");
-const path   = require("path");
-const os     = require("os");
+const fs      = require("fs");
+const path    = require("path");
+const os      = require("os");
+const AdmZip  = require("adm-zip");
 
-const newSapZip  = String.raw`<NEW_SAP_ZIP>`;   // from Phase 2
-const extractDir = path.join(os.tmpdir(), "new_ssam");
+const newSapZip  = String.raw`<NEW_SAP_ZIP>`;
+const workDir    = path.join(os.tmpdir(), "ssam_upgrade_" + Date.now());
+const newSapDir  = path.join(workDir, "new_sap");
+const outputDir  = path.join(workDir, "output");
 
-const zip     = new AdmZip(newSapZip);
-const entries = zip.getEntries().filter(e => e.entryName.includes("SAPAssetManager"));
-entries.forEach(e => zip.extractEntryTo(e, extractDir, true, true));
-console.log("Extracted " + entries.length + " files to " + extractDir);
+fs.mkdirSync(newSapDir,  { recursive: true });
+fs.mkdirSync(outputDir,  { recursive: true });
+
+const zip = new AdmZip(newSapZip);
+zip.getEntries()
+   .filter(e => e.entryName.includes("SAPAssetManager"))
+   .forEach(e => zip.extractEntryTo(e, newSapDir, true, true));
+
+console.log("New SAP extracted to: " + newSapDir);
 ```
 
 **Step 2 — Identify CIM-registered files that need upgrading:**
 
-**Only process files listed in the CIM.** Files in the custom project with no CIM entry
-are standalone additions — skip them entirely.
-
 ```javascript
-const fs   = require("fs");
-const path = require("path");
-const os   = require("os");
-
-const cimFile    = String.raw`<cim_file>`;
-const projectDir = String.raw`<projectDir>`;  // workspace root
-const newSapZip  = String.raw`<NEW_SAP_ZIP>`; // extracted to /tmp/new_ssam
+const cimFile   = String.raw`<cim_file>`;
+const customDir = String.raw`<custom_dir>`;
+const sapDir    = String.raw`<sap_dir>`;
 
 const cim = JSON.parse(fs.readFileSync(cimFile, "utf8"));
 const needsUpgrade = [];
 const unchanged    = [];
-const skipped      = [];
 
 for (const ip of (cim.IntegrationPoints || [])) {
-  const source = ip.Source || "";  // e.g. /ZEquinorSSAM/Rules/WorkOrders/X.js
-  const target = ip.Target || "";  // e.g. /SAPAssetManager/Rules/WorkOrders/X.js
-
+  const source = ip.Source || "";  // /ZEquinorSSAM/Rules/WorkOrders/X.js
+  const target = ip.Target || "";  // /SAPAssetManager/Rules/WorkOrders/X.js
   if (!source || !target || source.includes("SAPAssetManager")) continue;
 
-  // Paths come directly from CIM — no folder scanning needed
   const customFile = path.join(projectDir, source.replace(/^\//, ""));
   const oldSapFile = path.join(projectDir, target.replace(/^\//, ""));
-  const newSapFile = path.join(os.tmpdir(), "new_ssam", target.replace(/^\//, ""));
+  const newSapFile = path.join(newSapDir,  target.replace(/^\//, ""));
 
-  if (!fs.existsSync(oldSapFile) || !fs.existsSync(newSapFile)) {
-    skipped.push(source);
-    continue;
-  }
+  if (!fs.existsSync(oldSapFile) || !fs.existsSync(newSapFile)) continue;
 
   const oldContent = fs.readFileSync(oldSapFile, "utf8");
   const newContent = fs.readFileSync(newSapFile, "utf8");
 
   if (oldContent === newContent) {
-    unchanged.push(source);
+    unchanged.push({ source, customFile, newSapFile });
   } else {
-    needsUpgrade.push({ name: path.basename(source, ".js"), customFile, oldSapFile, newSapFile });
+    needsUpgrade.push({ name: path.basename(source, ".js"), source, target, customFile, oldSapFile, newSapFile });
   }
 }
 
-console.log("CIM entries: " + (needsUpgrade.length + unchanged.length + skipped.length));
 console.log("Needs upgrade: " + needsUpgrade.length);
-console.log("Unchanged: " + unchanged.length);
-console.log("Skipped (file missing): " + skipped.length);
-needsUpgrade.forEach(r => console.log("  → " + r.name));
+console.log("Unchanged SAP base: " + unchanged.length);
 ```
 
-**Step 3 — Create upgraded custom files:**
-
-For each CIM-registered file — create a new version based on the new SAP standard,
-with the custom logic carried forward. No merge tool needed.
+**Step 3 — Upgrade each file into output folder (never touch existing custom project):**
 
 ```javascript
-const fs   = require("fs");
-const path = require("path");
-
-function recalcImports(src, customFile, sapDir) {
-  // Fix import paths — custom files use absolute paths to SAPAssetManager
-  // Recalculate relative path from the custom file's location to each SAP module
-  const customFileDir = path.dirname(customFile);
+function recalcImports(src, outputFile, newSapDir) {
+  const fileDir = path.dirname(outputFile);
   return src.replace(
     /from\s+['"]((\.\.\/)+(?:SAPAssetManager\/[^'"]+))['"]/g,
     (match, importPath) => {
-      const resolved = path.resolve(customFileDir, importPath);
-      if (!resolved.startsWith(path.resolve(sapDir))) return match;
-      const newRel = path.relative(customFileDir, resolved).replace(/\\/g, "/");
+      const resolved = path.resolve(fileDir, importPath);
+      if (!resolved.startsWith(path.resolve(newSapDir))) return match;
+      const newRel = path.relative(fileDir, resolved).replace(/\/g, "/");
       return `from '${newRel.startsWith(".") ? newRel : "./" + newRel}'`;
     }
   );
 }
 
-function upgradeFile(oldSapFile, customFile, newSapFile, sapDir) {
-  const oldSap    = fs.readFileSync(oldSapFile, "utf8");
-  const customSrc = fs.readFileSync(customFile,  "utf8");
-  const newSap    = fs.readFileSync(newSapFile,  "utf8");
+function upgradeFile(ip) {
+  const { source, customFile, oldSapFile, newSapFile } = ip;
+  const customSrc  = fs.readFileSync(customFile,  "utf8");
+  const oldSap     = fs.readFileSync(oldSapFile,  "utf8");
+  const newSap     = fs.readFileSync(newSapFile,  "utf8");
 
-  // No custom changes at all — take new SAP file directly
+  // Output path mirrors source path inside output folder
+  const outputFile = path.join(outputDir, source.replace(/^\//, ""));
+  fs.mkdirSync(path.dirname(outputFile), { recursive: true });
+
+  // No custom changes — take new SAP file directly
   if (oldSap === customSrc) {
-    fs.copyFileSync(newSapFile, customFile);
-    recalcImports(customFile, sapDir);
+    const updated = recalcImports(newSap, outputFile, newSapDir);
+    fs.writeFileSync(outputFile, updated);
     return "no_custom_changes";
   }
 
-  // Identify what the developer changed vs old SAP (their custom additions/logic)
-  // Then apply those changes onto the new SAP file using function-level detection,
-  // not line-position overlay (line positions shift between SAP versions).
-  const oldLines    = oldSap.split("\n");
-  const customLines = customSrc.split("\n");
-  const newLines    = newSap.split("\n");
-
-  // Find blocks of lines that the developer added/changed in the custom file.
-  // Strategy: find lines in custom that are NOT in old SAP — these are custom additions.
-  // Append them to the new SAP file so custom logic is preserved.
-  const oldSet = new Set(oldLines.map(l => l.trim()).filter(Boolean));
-
-  // Lines in custom file that do not exist in old SAP standard = custom additions
+  // Find custom additions (lines in custom not in old SAP)
+  const oldSet = new Set(oldSap.split("
+").map(l => l.trim()).filter(Boolean));
+  const customLines = customSrc.split("
+");
+  const newLines    = newSap.split("
+");
   const customAdditions = customLines.filter(l => l.trim() && !oldSet.has(l.trim()));
-
-  // Build result: new SAP file as base, append unique custom lines at the end
-  // (preserving new SAP structure while keeping custom logic)
   const newSet = new Set(newLines.map(l => l.trim()).filter(Boolean));
   const uniqueCustom = customAdditions.filter(l => !newSet.has(l.trim()));
 
+  // New SAP file as base + custom additions appended
   const result = [...newLines];
   if (uniqueCustom.length > 0) {
-    result.push("", "// --- Custom additions from upgrade ---");
+    result.push("", "// --- Custom additions (upgraded) ---");
     result.push(...uniqueCustom);
   }
 
-  recalcImports(customFile, sapDir);
+  const updated = recalcImports(result.join("
+"), outputFile, newSapDir);
+  fs.writeFileSync(outputFile, updated);
   return "upgraded";
 }
 
-// Process all CIM-registered files
 const results = { upgraded: [], no_change: [], failed: [] };
 for (const r of needsUpgrade) {
   try {
-    const status = upgradeFile(r.oldSapFile, r.customFile, r.newSapFile, sapDir);
-    if (status === "no_custom_changes") results.no_change.push(r.name);
-    else                                results.upgraded.push(r.name);
-  } catch (e) {
+    const status = upgradeFile(r);
+    (status === "no_custom_changes" ? results.no_change : results.upgraded).push(r.name);
+  } catch(e) {
     results.failed.push({ name: r.name, error: e.message });
   }
 }
 
-console.log("Upgraded (new SAP base + custom logic): " + results.upgraded.length);
-console.log("No custom delta (new SAP taken directly): " + results.no_change.length);
-console.log("Failed: " + results.failed.length);
-if (results.failed.length > 0)
-  results.failed.forEach(r => console.log("  FAILED: " + r.name + " — " + r.error));
-```
+// Copy unchanged CIM-registered files to output (new SAP base)
+for (const r of unchanged) {
+  const outputFile = path.join(outputDir, r.source.replace(/^\//, ""));
+  fs.mkdirSync(path.dirname(outputFile), { recursive: true });
+  fs.copyFileSync(r.newSapFile, outputFile);
+}
 
-**What this does per file:**
+// Carry forward all files in custom project NOT in CIM
+// These are standalone additions (new features, helpers, utilities)
+// They don't override anything in SAPAssetManager — copy as-is, no upgrade needed
+const cimSources = new Set(
+  (cim.IntegrationPoints || [])
+    .map(ip => path.resolve(projectDir, (ip.Source || "").replace(/^\//, "")))
+);
 
-| Case | Result |
-|---|---|
-| No custom changes vs old SAP | New SAP file taken directly, import paths adjusted |
-| Custom changes exist | New SAP file created, custom logic overlaid at same line positions, import paths adjusted |
-
-No git. No merge-file. No conflict markers. Just a new file created for each CIM entry.
-
-
-**What this does per file:**
-1. 3-way merge (base=old SAP, custom=your changes, new=new SAP) line by line
-2. Import path style differences (relative vs absolute, same module) → keep custom version, no conflict
-3. After clean merge → `recalcImports()` recalculates every `../../../../SAPAssetManager/...`
-   import to the correct relative path from the custom file's location
-4. Genuine conflicts (both custom and SAP changed the same logic lines) → conflict markers written
-
-
-**Only genuine conflicts are flagged** — where both the developer AND SAP changed the same
-lines to different logic. Import path style differences are resolved automatically in favour
-of the custom version (absolute paths).
-
-**Step 3b — Add CIM entries for every upgraded file:**
-
-```javascript
-// After merge — ensure every upgraded file has a CIM entry
-const cimData = JSON.parse(fs.readFileSync(cimFile, "utf8"));
-const existingSources = new Set((cimData.IntegrationPoints||[]).map(ip=>ip.Source));
-
-for (const r of needsUpgrade) {
-  const source = "/" + path.relative(path.dirname(customDir), r.customFile).replace(/\\/g,"/");
-  const target = "/" + path.relative(path.dirname(sapDir),    r.oldSapFile).replace(/\\/g,"/");
-  if (!existingSources.has(source)) {
-    cimData.IntegrationPoints = cimData.IntegrationPoints || [];
-    cimData.IntegrationPoints.push({ Source: source, Target: target });
-    console.log("Added CIM entry: " + source);
+function copyNonCimFiles(srcDir, relBase) {
+  if (!fs.existsSync(srcDir)) return;
+  for (const entry of fs.readdirSync(srcDir, { withFileTypes: true })) {
+    const srcPath = path.join(srcDir, entry.name);
+    const relPath = path.join(relBase, entry.name);
+    if (entry.isDirectory()) {
+      if (entry.name === "Services") return; // handled separately below
+      copyNonCimFiles(srcPath, relPath);
+    } else if (!cimSources.has(path.resolve(srcPath))) {
+      // Not in CIM — standalone addition, carry forward unchanged
+      const outFile = path.join(outputDir, relPath);
+      fs.mkdirSync(path.dirname(outFile), { recursive: true });
+      fs.copyFileSync(srcPath, outFile);
+    }
   }
 }
-fs.writeFileSync(cimFile, JSON.stringify(cimData, null, 4));
-console.log("CIM updated");
+
+copyNonCimFiles(customDir, path.basename(customDir));
+console.log("✅ Standalone (non-CIM) files carried forward as-is");
+
+// Always replace Services/ folder entirely from new SAP version
+// Services/ contains OData metadata — never customised, must be latest version
+const newServicesDir = path.join(newSapDir, "SAPAssetManager", "Services");
+const outServicesDir = path.join(outputDir, path.basename(customDir), "Services");
+
+if (fs.existsSync(newServicesDir)) {
+  fs.mkdirSync(outServicesDir, { recursive: true });
+  function copyDir(src, dst) {
+    for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+      const srcPath = path.join(src, entry.name);
+      const dstPath = path.join(dst, entry.name);
+      if (entry.isDirectory()) {
+        fs.mkdirSync(dstPath, { recursive: true });
+        copyDir(srcPath, dstPath);
+      } else {
+        fs.copyFileSync(srcPath, dstPath);
+      }
+    }
+  }
+  copyDir(newServicesDir, outServicesDir);
+  console.log("✅ Services/ updated from new SAP version → " + outServicesDir);
+} else {
+  console.log("⚠ Services/ not found in new SAP ZIP — skipping");
+}
+
+console.log("Upgraded: " + results.upgraded.length);
+console.log("No custom delta: " + results.no_change.length);
+console.log("Failed: " + results.failed.length);
 ```
 
-**Step 4 — Auto-merge CIM file (SAP standard entries):**
-- Keep: entries where Source contains custom project name
-- Take: SAP standard entries from new version
-- Add: new SAP rules introduced in new version
-- Drop: rules removed from new version
+**Step 4 — Auto-merge CIM and write to output folder:**
 
-**Step 5 — Validate:**
+Read current CIM, merge with new SAP CIM entries, write to output folder:
+
+```javascript
+const cimData    = JSON.parse(fs.readFileSync(cimFile, "utf8"));
+const newCimFile = path.join(newSapDir, "SAPAssetManager", path.basename(cimFile));
+const outputCim  = path.join(outputDir, path.basename(cimFile));
+
+const customEntries = (cimData.IntegrationPoints || [])
+  .filter(ip => !ip.Source.includes("SAPAssetManager"));
+const newCim = fs.existsSync(newCimFile)
+  ? JSON.parse(fs.readFileSync(newCimFile, "utf8")) : { IntegrationPoints: [] };
+const sapEntries = (newCim.IntegrationPoints || [])
+  .filter(ip => ip.Source.includes("SAPAssetManager"));
+
+cimData.IntegrationPoints = [...customEntries, ...sapEntries];
+fs.writeFileSync(outputCim, JSON.stringify(cimData, null, 4));
+console.log("CIM merged → " + outputCim);
 ```
-mcp__mdk__mdk-manage { "folderRootPath": "<customDir>", "operation": "validate" }
+
+**Step 5 — Package output folder into ZIP:**
+
+```javascript
+const outputZip = path.join(
+  path.dirname(customDir),
+  path.basename(customDir) + "_upgraded_" + new Date().toISOString().slice(0,10) + ".zip"
+);
+
+const outZip = new AdmZip();
+outZip.addLocalFolder(outputDir, path.basename(customDir));
+outZip.writeZip(outputZip);
+
+console.log("\n✅ Upgraded ZIP created: " + outputZip);
+console.log("   Contains: " + results.upgraded.length + " upgraded files, " +
+            results.no_change.length + " unchanged, " + results.failed.length + " failed");
+console.log("\nNext steps:");
+console.log("  1. Extract " + path.basename(outputZip) + " alongside your new SAPAssetManager folder");
+console.log("  2. Open the extracted folder in VS Code with the new SAPAssetManager");
+console.log("  3. Run mdk_manage validate to confirm 0 errors");
+console.log("  4. Deploy to DEV for testing before promoting to QA/PROD");
 ```
-Result must be 0 errors. If errors remain → BLOCKING with error list.
+
+**Existing custom project at `<customDir>` is completely untouched.**
 
 ## Phase 6 — Post-upgrade checklist
 
-- [ ] All `<CUSTOM_DIR>` customisations present in merged output
-- [ ] Every `.js` in `<CUSTOM_DIR>/Rules/` has a CIM entry
-- [ ] No stale CIM entries for removed rules
-- [ ] CIM `path` attributes use correct custom project folder name
-- [ ] `mdk_manage validate` → 0 errors
-- [ ] `ApplicationVersion` bumped in `.project.json`
-        (MAJOR version if schema changed)
-- [ ] Offline app: `OnWillUpdate` + `OnDidUpdate` implemented
-        (see `mdk-app-update` skill)
-- [ ] Deploy: DEV → test → QA → PROD
-        (see `mdk-environment-deploy` skill)
+**The upgraded ZIP has been delivered. Existing custom project is completely untouched.**
+
+**What the ZIP contains:**
+- CIM-registered files — upgraded (new SAP base + your custom logic applied on top)
+- Non-CIM files — carried forward as-is (standalone additions, new features you built)
+- `Services/` folder — replaced entirely from new SAP version (latest OData metadata)
+- Updated CIM file — your custom entries kept + new SAP standard entries merged in
+
+**Path to ZIP:** `<CUSTOM_NAME>_upgraded_<date>.zip` — same folder as existing custom project.
+
+**Developer steps:**
+- [ ] Extract the ZIP alongside your new `SAPAssetManager/` folder
+- [ ] Open VS Code with: new `SAPAssetManager/` + extracted `<CUSTOM_NAME>/` in same workspace
+- [ ] Run `mdk_manage validate` → must be 0 errors
+- [ ] Bump `ApplicationVersion` in `.project.json` (MAJOR if schema changed)
+- [ ] Offline app: implement `OnWillUpdate` + `OnDidUpdate` — see `mdk-app-update` skill
+- [ ] Deploy DEV → test → QA → PROD — see `mdk-environment-deploy` skill
+
+**Old project** at `<customDir>` is safe to compare against or roll back to at any time.
 
 ---
 
