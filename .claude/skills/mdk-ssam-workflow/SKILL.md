@@ -127,25 +127,28 @@ Mirror the **complete** SAPAssetManager/ folder tree — never hardcode folder n
 A real SSAM project contains Actions/, Pages/, Rules/, Services/, Styles/, i18n/,
 Formatters/, Converters/, and entity-specific subfolders inside each.
 
-```bash
-# Z_PROJECT = agreed project name (e.g. ZEquinorSSAM)
-# SAP_DIR   = path to SAPAssetManager/ in workspace
+```javascript
+// Node.js — mirrors top-level folders from SAPAssetManager/ into Z project
+const fs   = require("fs");
+const path = require("path");
 
-# Mirror only top-level folders from SAPAssetManager/
-# Entity subfolders (e.g. Rules/WorkOrders/) are created on demand
-# when override files are placed there during customisation.
-for src_dir in "$SAP_DIR"/*/; do
-  folder=$(basename "$src_dir")
-  mkdir -p "$Z_PROJECT/$folder"
-  echo "✅ $Z_PROJECT/$folder"
-done
+const sapDir    = String.raw`<SAP_DIR>`;    // path to SAPAssetManager/
+const zProject  = String.raw`<Z_PROJECT>`; // new custom project path
 
-echo "Z project created at: $Z_PROJECT"
+// Read top-level folders from SAPAssetManager and create matching ones in Z project
+for (const entry of fs.readdirSync(sapDir, { withFileTypes: true })) {
+  if (entry.isDirectory()) {
+    const target = path.join(zProject, entry.name);
+    fs.mkdirSync(target, { recursive: true });
+    console.log("✅ " + target);
+  }
+}
+console.log("Z project created at: " + zProject);
 ```
 
-This creates the top-level folders that exist in SAPAssetManager/ —
+This creates only top-level folders from SAPAssetManager/ —
 typically: `Actions/`, `Pages/`, `Rules/`, `Services/`, `Styles/`, `i18n/`,
-and any others present in the installed SSAM version.
+and any others present. Entity subfolders are created on demand.
 
 ### Minimal CIM file for new Z project
 
@@ -173,7 +176,7 @@ When overriding an existing SAP standard artifact:
    [ -f "$Z_FILE" ] && echo EXISTS || echo MISSING
 
 5. If MISSING — ask permission, then:
-   mkdir -p "$(dirname $Z_FILE)"
+   fs.mkdirSync(path.dirname(zFile), { recursive: true });
    cp "$SAP_DIR/Rules/Operations/ConfirmOperation.js" "$Z_FILE"
 
 6. If EXISTS — inspect it:

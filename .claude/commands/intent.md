@@ -17,19 +17,25 @@ You are running the **Intent2App** end-to-end flow in the MAIN thread (so you �
 > **HARD RULE — MDK MCP server is mandatory for ALL MDK and SSAM queries.**
 > Never answer MDK or SAP Asset Manager (SSAM) questions using only Glob/Grep/Read.
 > Always call MDK MCP tools first. If the server is unreachable at port 3999, stop and tell the developer:
-> "MDK MCP server is not reachable. Start it and reload Claude Code before retrying."
+> "Intent2App MCP server is not reachable at port 3999. Start it with: cd mcp-server && npm run start-http. The SAP @sap/mdk-mcp-server starts automatically via .mcp.json — no manual action needed."
 > Do NOT fall back to file-system tools for MDK/SSAM queries — surface the error instead.
 
 **MDK dependencies (run only when requirement mentions mobile, field worker, offline, barcode scanner, MDK, or SAP Mobile Services — skip entirely for CAP/Fiori/UI5).**
 
-If the requirement suggests an MDK app, run these checks via Bash:
+If the requirement suggests an MDK app **and is NOT ssam-upgrade or ssam-customize**, run this **single silent Node.js script** (no bash permission popup):
 
-```bash
-npx @sap/mdk-tools --version 2>/dev/null && echo "MDK_CLI=ok" || echo "MDK_CLI=missing"
-node --version
+```javascript
+const cp = require("child_process");
+const run = cmd => { try { return cp.execSync(cmd, { stdio:"pipe" }).toString().trim(); } catch(e) { return null; } };
+const mdkVer  = run("npx @sap/mdk-tools --version");
+const nodeVer = run("node --version");
+console.log("mdk_cli=" + (mdkVer || "missing"));
+console.log("node_version=" + (nodeVer || "unknown"));
 ```
 
-- **If `@sap/mdk-tools` is missing** → auto-install without asking: `npm install -g @sap/mdk-tools`. Re-probe. If still missing → **HARD STOP**: "Could not install @sap/mdk-tools. Check npm registry access and re-run /intent."
+Skip this check entirely for `ssam-upgrade` and `ssam-customize`.
+
+- **If mdk_cli=missing** → auto-install: `npm install -g @sap/mdk-tools`. If still missing → tell developer to check npm registry access and stop. /intent."
 - **If Node.js < 22** → warn: "MDK CLI requires Node.js 22+." Continue — developer can still work on scaffolding; CLI validation will fail at build/deploy time.
 - **If all MDK checks pass** → print `✓ MDK dependencies ready.`
 
@@ -275,9 +281,9 @@ Do NOT check CF login here — check it only when a CF-dependent intent is ident
 
 **MDK MCP server check (mandatory — run immediately after MDK CLI check):**
 
-Call `mcp__mdk__mdk-docs` with `{ "topic": "overview" }` as a lightweight probe.
+Call `mcp__intent2app__validate_namespace` with `{ "namespace": "com.preflight" }` as a lightweight probe to confirm the Intent2App MCP server is running.
 
-- **Succeeds** → print `✓ MDK MCP server is running at port 3999.` Done.
+- **Succeeds** → print `✓ Intent2App MCP server running at port 3999. SAP MDK server (@sap/mdk-mcp-server) starts automatically via .mcp.json.` Done.
 - **Fails / connection refused** → **HARD STOP**:
   ```
   ✗ MDK MCP server is not reachable at http://localhost:3999/mcp.

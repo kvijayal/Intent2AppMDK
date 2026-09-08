@@ -120,7 +120,16 @@
       "Bash(node:*)",
       "Bash(node *)",
       "Bash(git merge-file:*)",
-      "Bash(git --version)"
+      "Bash(git --version)",
+      "Bash(npx @sap/mdk-tools --version)",
+      "Bash(npx @sap/mdk-tools:*)",
+      "Bash(node --version)",
+      "Bash(npx @sap/mdk-tools --version 2>$null*)",
+      "Bash(npx @sap/generator-mdk:*)",
+      "Bash(npm install -g @sap/mdk-tools)",
+      "Bash(npm install -g @sap/mdk-tools:*)",
+      "Bash(npm install -g:*)",
+      "Bash(npx @sap/mdk-tools --version 2>/dev/null*)"
     ]
   },
   "hooks": {

@@ -118,22 +118,27 @@ console.log("current_version=" + currentVersion);
 
 ## Phase 2 — Ask for the one required input
 
-Once workspace is confirmed, ask for the single input needed:
+Use the actual values from Phase 1 output. Build the BLOCKING message dynamically:
 
+```javascript
+// After Phase 1 script runs, read its output and build the BLOCKING message
+const msg = [
+  "BLOCKING: Detected your workspace:",
+  "  Standard: " + sap_dir + " (version: " + current_version + ")",
+  "  Custom:   " + custom_dir,
+  "  CIM:      " + cim_file,
+  "",
+  "I need ONE thing from you:",
+  "  Path to the new SAPAssetManager ZIP (latest SAP release to upgrade to).",
+  "",
+  "Don't have it?",
+  "  Download from: https://help.sap.com/docs/SAP_SERVICE_ASSET_MANAGER",
+  "  → Select your target version → Download metadata ZIP"
+].join("\n");
+console.log(msg);
 ```
-BLOCKING:
-Detected your workspace:
-  Standard: <SAP_DIR> (version: <current_version>)
-  Custom:   <CUSTOM_DIR>
-  CIM:      <CIM_FILE>
 
-I need ONE thing from you:
-  Path to the new SAPAssetManager ZIP (latest SAP release to upgrade to).
-
-Don't have it?
-  Download from: https://help.sap.com/docs/SAP_SERVICE_ASSET_MANAGER
-  → Select your target version → Download metadata ZIP
-```
+Surface this as a BLOCKING question to the user. Wait for the ZIP path before continuing.
 
 ---
 
@@ -416,38 +421,38 @@ function upgradeFile(oldSapFile, customFile, newSapFile, sapDir) {
 
   // No custom changes at all — take new SAP file directly
   if (oldSap === customSrc) {
-    const updated = recalcImports(newSap, customFile, sapDir);
-    fs.writeFileSync(customFile, updated);
+    fs.copyFileSync(newSapFile, customFile);
+    recalcImports(customFile, sapDir);
     return "no_custom_changes";
   }
 
-  // Identify custom lines — lines in customSrc that differ from oldSap
+  // Identify what the developer changed vs old SAP (their custom additions/logic)
+  // Then apply those changes onto the new SAP file using function-level detection,
+  // not line-position overlay (line positions shift between SAP versions).
   const oldLines    = oldSap.split("\n");
   const customLines = customSrc.split("\n");
   const newLines    = newSap.split("\n");
 
-  // Build a map of line index → custom content for lines the developer changed
-  const customDelta = new Map();
-  const maxOld = Math.max(oldLines.length, customLines.length);
-  for (let i = 0; i < maxOld; i++) {
-    if ((customLines[i] ?? "") !== (oldLines[i] ?? "")) {
-      customDelta.set(i, customLines[i] ?? "");
-    }
-  }
+  // Find blocks of lines that the developer added/changed in the custom file.
+  // Strategy: find lines in custom that are NOT in old SAP — these are custom additions.
+  // Append them to the new SAP file so custom logic is preserved.
+  const oldSet = new Set(oldLines.map(l => l.trim()).filter(Boolean));
 
-  // Start from new SAP file, overlay custom changes at same line positions
+  // Lines in custom file that do not exist in old SAP standard = custom additions
+  const customAdditions = customLines.filter(l => l.trim() && !oldSet.has(l.trim()));
+
+  // Build result: new SAP file as base, append unique custom lines at the end
+  // (preserving new SAP structure while keeping custom logic)
+  const newSet = new Set(newLines.map(l => l.trim()).filter(Boolean));
+  const uniqueCustom = customAdditions.filter(l => !newSet.has(l.trim()));
+
   const result = [...newLines];
-  for (const [i, customLine] of customDelta) {
-    if (i < result.length) {
-      result[i] = customLine;   // replace with custom version
-    } else {
-      result.push(customLine);  // append if beyond new SAP file length
-    }
+  if (uniqueCustom.length > 0) {
+    result.push("", "// --- Custom additions from upgrade ---");
+    result.push(...uniqueCustom);
   }
 
-  // Fix import paths in the result
-  const updated = recalcImports(result.join("\n"), customFile, sapDir);
-  fs.writeFileSync(customFile, updated);
+  recalcImports(customFile, sapDir);
   return "upgraded";
 }
 

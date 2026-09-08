@@ -71,7 +71,7 @@ Both the **local Intent2App tools** (`mcp__intent2app__mdk_*`) and the **officia
 | Check / fix bundler externals | `mdk-bundler-settings` **skill** | — |
 
 If a tool call fails with a connection error, stop and tell the developer:
-> "MDK MCP server is not reachable. Please reload the Claude Code window and retry."
+> "Intent2App MCP server is not reachable at port 3999. To start: cd mcp-server && npm run start-http. The SAP MDK server starts automatically — no manual start needed."
 Do NOT fall back to file-system tools for MDK/SSAM questions — surface the error instead.
 
 ---

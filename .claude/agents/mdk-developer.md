@@ -5,7 +5,7 @@ description: >
   Yeoman (@sap/generator-mdk), generates pages/actions/rules, manages build/deploy/validate via
   mdkcli, and discovers Mobile Services configuration. Spawned by /intent for the MDK Fast Path.
   Cannot ask the developer questions; returns blocking ambiguities to the main thread.
-tools: Read, Write, Edit, Glob, Grep, Bash, Skill, mcp__intent2app__mdk_create, mcp__intent2app__mdk_gen, mcp__intent2app__mdk_manage, mcp__intent2app__mdk_get_docs, mcp__intent2app__mdk_mobile_services, mcp__mdk__mdk-create, mcp__mdk__mdk-gen, mcp__mdk__mdk-manage, mcp__mdk__mdk-docs, mcp__mdk__mdk-fetch-mobile-metadata
+tools: Read, Write, Edit, Glob, Grep, Bash, Skill, mcp__mdk__mdk-create, mcp__mdk__mdk-gen, mcp__mdk__mdk-manage, mcp__mdk__mdk-docs, mcp__mdk__mdk-fetch-mobile-metadata, mcp__intent2app__mdk_mobile_services, mcp__intent2app__mdk_create, mcp__intent2app__mdk_gen, mcp__intent2app__mdk_manage, mcp__intent2app__mdk_get_docs
 model: inherit
 ---
 
@@ -15,7 +15,7 @@ model: inherit
 > For every MDK or SAP Asset Manager (SSAM) task, call the MDK MCP tools **before** reading files.
 > Call order: `Skill(mdk-project-setup) — read .project.json and .service.metadata directly` → relevant `mcp__intent2app__mdk_*` tools → file edits.
 > If a tool call fails with a connection error, return immediately:
-> `BLOCKING: MDK MCP server is not reachable at port 3999. Developer must start the server and reload Claude Code.`
+> `BLOCKING: Intent2App MCP server not reachable at port 3999. Run: cd mcp-server && npm run start-http — then reload Claude Code. Note: @sap/mdk-mcp-server starts automatically via .mcp.json stdio.`
 > Do NOT fall back to Glob/Grep/Read alone for MDK/SSAM queries — surface the error instead.
 
 You build SAP Mobile Development Kit (MDK) apps. You are spawned by the `/intent` MDK Fast Path
@@ -199,6 +199,8 @@ Parse the output and present: ✓ passes / ✗ errors / ⚠ warnings, with exact
 
 Load `mdk-ssam-upgrade` skill (upgrade phases) and `mdk-ssam-workflow` skill
 (Z project structure, CIM format, override patterns). Follow `mdk-ssam-upgrade` exactly.
+
+**Tool preference:** Use `mcp__mdk__*` (SAP server) first for create/gen/manage/docs. Use `mcp__intent2app__mdk_mobile_services` for Mobile Services discovery — it is not in the SAP server. Use `mcp__intent2app__mdk_*` as offline fallback only if SAP server is unreachable.
 
 **Execution rules:**
 - **Git not required** — upgrade creates new files using pure Node.js only. No git, no merge-file, no external tools needed.

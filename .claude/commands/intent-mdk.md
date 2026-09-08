@@ -16,38 +16,33 @@
 
 ### MDK STEP 1 — Initialize MDK dependencies
 
-Run immediately after MDK is selected. Skip the Yeoman and CDS checks — they are not needed for MDK.
+**Skip STEP 1 entirely for `ssam-upgrade` and `ssam-customize`.**
+These intents use only Node.js file operations — no MDK CLI, no MCP server check needed.
+If `$ARGUMENTS` contains "upgrade SSAM", "SSAM upgrade", "customize SSAM", or "SSAM customize"
+→ jump directly to STEP 2.
 
-```bash
-npx @sap/mdk-tools --version 2>/dev/null && echo "MDK_CLI=ok" || echo "MDK_CLI=missing"
-node --version
+For all other MDK intents, run this **single silent Node.js script** (node is pre-approved — no permission popup):
+
+```javascript
+const cp = require("child_process");
+
+function run(cmd) {
+  try { return cp.execSync(cmd, { stdio: "pipe" }).toString().trim(); }
+  catch(e) { return null; }
+}
+
+const mdkVersion = run("npx @sap/mdk-tools --version");
+const nodeVersion = run("node --version");
+
+console.log("mdk_cli=" + (mdkVersion || "missing"));
+console.log("node_version=" + (nodeVersion || "unknown"));
 ```
 
-| Dependency | Status | Action if missing |
-|---|---|---|
-| `@sap/mdk-tools` (MDK CLI) | ✅ / ❌ | Auto-install: `npm install -g @sap/mdk-tools` |
-| Node.js >= 22 | ✅ / ⚠️ | https://nodejs.org |
+- `mdk_cli=missing` → auto-install silently: run `npm install -g @sap/mdk-tools` then re-check. If still missing → tell developer and stop.
+- `node_version` < 22 → warn but continue.
+- All good → print `✓ MDK CLI ready · Node.js <version>`
 
-- If `@sap/mdk-tools` missing after auto-install → **HARD STOP**: "Could not install @sap/mdk-tools. Check npm registry access."
-- If Node.js < 22 → warn but continue.
-
-Print: `✓ MDK dependencies ready. ▶ MDK Fast Path active`
-
-Do NOT check CF login here — check it only when a CF-dependent intent is identified in STEP 3.
-
-**MDK MCP server check (mandatory — run immediately after MDK CLI check):**
-
-Call `mcp__mdk__mdk-docs` with `{ "topic": "overview" }` as a lightweight probe.
-
-- **Succeeds** → print `✓ MDK MCP server is running at port 3999.` Done.
-- **Fails / connection refused** → **HARD STOP**:
-  ```
-  ✗ MDK MCP server is not reachable at http://localhost:3999/mcp.
-  All MDK and SSAM queries require the MDK MCP server.
-  To start it: cd mcp-server && npm run start-http
-  Then reload the Claude Code window and re-run /intent.
-  ```
-  Do NOT proceed. Do NOT fall back to file-system tools for MDK questions.
+Do NOT check CF login here — only when a CF-dependent intent is identified in STEP 3.
 
 ---
 
@@ -65,15 +60,7 @@ Options:
   - "Modify an existing MDK project"
   - "Deploy my MDK app"
   - "Validate / build my MDK project"
-  - "Upgrade SAP Asset Manager (SSAM) to a new version"
-  - "Customize SAP Asset Manager (SSAM) — add overrides or new features"
 ```
-
-If user selects **"Upgrade SAP Asset Manager"** or **"Customize SAP Asset Manager"**:
-→ intent is identified immediately (`ssam-upgrade` or `ssam-customize`)
-→ skip to STEP 5 — spawn agent directly with that intent
-→ **do NOT ask further sub-questions in the main flow**
-→ the `mdk-developer` agent handles all further questions via BLOCKING
 
 If user selects one of the other options → proceed to STEP 3 to identify intent.
 
