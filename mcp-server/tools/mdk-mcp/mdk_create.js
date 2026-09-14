@@ -92,8 +92,8 @@ async function generateTemplateBasedMetadata(
     else yoCommand = "yo"; // system PATH fallback
   }
 
-  let script = `${yoCommand} ${mdkGeneratorPath}/generators/app/index.js --dataFile ${configPath} --force`;
-  if (mdkBinary) script += ` --tool ${mdkBinary}`;
+  let script = `"${yoCommand}" "${mdkGeneratorPath}/generators/app/index.js" --dataFile "${configPath}" --force`;
+  if (mdkBinary) script += ` --tool "${mdkBinary}"`;
   return script;
 }
 
