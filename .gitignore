@@ -1,0 +1,2 @@
+# Ignore node_modules directory for the mcp-server project
+mcp-server/node_modules/
