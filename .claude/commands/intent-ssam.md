@@ -10,9 +10,8 @@ MDK
     -> Customize
 ```
 
-The purpose of this skill is to safely create and implement SAP Asset Manager customizations using a separate Z/customization project and CIM.
-
-The workflow MUST be deterministic, evidence-based, and driven by the CURRENT workspace.
+The purpose of this skill is to safely create and implement SAP Asset Manager customizations
+using a separate Z/customization project and CIM.
 
 ---
 
@@ -20,851 +19,285 @@ The workflow MUST be deterministic, evidence-based, and driven by the CURRENT wo
 
 ## RULE 1 — CURRENT WORKSPACE IS THE SOURCE OF TRUTH
 
-For project and CIM discovery, ONLY consider files and folders that currently exist in the working tree/filesystem.
+Only consider files and folders that currently exist on disk.
+Deleted files do not exist. Never inspect Git history to discover SSAM projects or CIM files.
+Never propose restoring a deleted CIM or Z project unless the user explicitly asks for recovery.
 
-A file that existed previously but was deleted is considered NON-EXISTENT.
-
-Do NOT recover deleted files automatically.
-
-Do NOT inspect Git history to discover SSAM projects or CIM files.
-
-Do NOT use:
-
-- `git log`
-- `git show`
-- `git reflog`
-- `git fsck`
-- `git branch`
-- `git stash`
-- `git log --all`
-- `git diff`
-- Git deleted-file history
-- previous commits
-- previous branches
-
-to determine whether a CIM or Z project exists.
-
-A CIM found ONLY in Git history does NOT count as an existing CIM.
-
-A Z project found ONLY in Git history does NOT count as an existing Z project.
-
-NEVER propose restoring an old deleted CIM or Z project unless the USER explicitly asks for recovery.
+Prohibited commands: `git log`, `git show`, `git reflog`, `git fsck`, `git stash`, `git log --all`, `git diff`.
 
 ---
 
-## RULE 2 — NO PRE-EMPTIVE CREATION
+## RULE 2 — DISCOVER FIRST, CREATE SECOND
 
-Discovery must be READ-ONLY.
+Discovery is always READ-ONLY. Never create anything before the workflow reaches its creation step.
 
-NEVER create anything during discovery.
-
-Do NOT create:
-
-- CIM files
-- Z projects
-- MDK projects
-- `Application.app`
-- rules
-- pages
-- actions
-- controls
-- i18n files
-- override files
-
-before the workflow reaches the appropriate creation step.
-
-The required sequence is ALWAYS:
-
+Required sequence:
 ```
-DISCOVER
-   ↓
-REPORT
-   ↓
-ASK USER
-   ↓
-RECEIVE ANSWER
-   ↓
-CREATE
-   ↓
-VERIFY
-```
-
-NEVER do:
-
-```
-DISCOVER
-   ↓
-CREATE
-   ↓
-ASK USER
+DISCOVER (silent) → REPORT → ASK USER → CREATE → VERIFY
 ```
 
 ---
 
-## RULE 3 — MDK MCP IS MANDATORY
+## RULE 3 — FILESYSTEM TOOLS FOR SSAM SETUP
 
-The SAP MDK MCP MUST be used for ALL MDK and SSAM implementation work whenever the required capability is available.
-
-This includes, but is not limited to:
-
-- inspecting MDK projects
-- creating the Z/customization MDK project
-- creating or modifying MDK artifacts
-- creating or modifying CIM files
-- configuring CIM
-- implementing SSAM customizations
-- creating pages
-- modifying pages
-- creating actions
-- modifying actions
-- creating rules
-- modifying rules
-- modifying controls
-- creating application artifacts
-- modifying i18n/customization artifacts
-- validating MDK artifacts
-- any other MDK-specific operation
-
-Do NOT manually fabricate MDK project structures when MDK MCP can perform the operation.
-
-Do NOT use generic filesystem manipulation as a replacement for MDK MCP for MDK-specific operations.
-
-Filesystem tools may be used for READ-ONLY discovery and verification where appropriate.
-
-If MDK MCP provides a capability for an operation, ALWAYS prefer MDK MCP.
+CIM files and Z project scaffolding are plain JSON/folder operations.
+Use filesystem tools (Write, Bash/Node.js) for CIM and Z project creation — MDK MCP is not required for these.
+MDK MCP is required for MDK artifact generation (pages, rules, actions) and validation.
 
 ---
 
 ## RULE 4 — NEVER INVENT MDK MCP TOOLS
 
 Only call MDK MCP tools that actually exist and are available in the environment.
-
-NEVER invent:
-
-- MCP tool names
-- MCP parameters
-- MCP responses
-- MCP capabilities
-
-If the required operation cannot be performed because the required MDK MCP capability is unavailable:
-
-**STOP.**
-
-Report the limitation to the user.
-
-Do NOT create a fake workaround and claim it is an MDK implementation.
+If a required MDK MCP capability is unavailable, STOP and report the limitation.
 
 ---
 
 ## RULE 5 — SAP ASSET MANAGER STANDARD PROJECT IS READ-ONLY
 
-The SAP Asset Manager standard project is the BASE project.
-
-The standard project MUST NOT be modified during customization.
-
-All customization work MUST be performed in the separate Z/customization project.
-
-For example:
+Never modify files inside `SAPAssetManager/`. All custom code goes in the Z project.
 
 ```
 <parent>/
-├── SAPAssetManager/
-└── ZSAPAssetManager/
+├── SAPAssetManager/     ← READ ONLY
+└── ZSAPAssetManager/    ← all custom code here
 ```
 
-NEVER create:
-
-```
-SAPAssetManager/
-└── ZSAPAssetManager/
-```
-
-NEVER modify the original `SAPAssetManager` files unless the user explicitly asks for a direct modification.
+The CIM lives in the **root of `SAPAssetManager/`** — not inside the Z project.
 
 ---
 
 ## RULE 6 — NEVER OVERWRITE EXISTING CUSTOMIZATION
 
-Never overwrite, delete, replace, or restructure an existing Z/customization artifact without explicit user confirmation.
-
-Before modifying an existing file:
-
-1. Inspect it.
-2. Understand its current content.
-3. Determine exactly what needs to change.
-4. Preserve unrelated content.
-5. Ask for confirmation if the operation is destructive.
+Before modifying an existing Z artifact: inspect it, understand it, preserve unrelated content,
+and ask for confirmation if the change is destructive.
 
 ---
 
-## RULE 7 — NEVER INVENT CIM SYNTAX
+## RULE 7 — CIM FORMAT: SOURCE AND TARGET ONLY
 
-Do NOT guess CIM syntax.
+CIM IntegrationPoints entries must contain **only** `Source` and `Target`. No Description, no other fields.
 
-Determine CIM structure from:
+```json
+{
+    "Source": "/ZSAPAssetManager/Rules/WorkOrders/WorkOrderListViewCaption.js",
+    "Target": "/SAPAssetManager/Rules/WorkOrders/WorkOrderListViewCaption.js"
+}
+```
 
-1. Existing CIM files in the current workspace
-2. `mdk-ssam-patterns`
-3. `mdk-ssam-workflow`
-4. MDK MCP
-5. MDK MCP documentation/capabilities
-6. Actual SSAM project structure
-
-If the correct CIM structure cannot be established:
-
-**STOP.**
-
-Do not invent a CIM format.
+Determine CIM structure from: existing CIM files → `mdk-ssam-workflow` skill → `mdk-ssam-patterns` skill.
 
 ---
 
 ## RULE 8 — INSPECT BEFORE MODIFYING
 
-Before implementing ANY SSAM customization:
-
-1. Identify the actual SSAM artifact.
-2. Inspect the existing implementation.
-3. Identify the actual file/path.
-4. Inspect existing customization patterns.
-5. Determine the correct CIM/customization mechanism.
-6. Only then make the change.
-
-Never implement based solely on general knowledge of SAP Asset Manager.
+Before implementing any customization: find the artifact, read it, understand it, then change only what's needed.
 
 ---
 
 ## RULE 9 — VERIFY EVERY OPERATION
 
-After every creation or modification:
-
-1. Verify that the operation actually succeeded.
-2. Verify the expected file/project/artifact exists.
-3. Verify that the resulting structure is correct.
-4. Verify that the standard SAP Asset Manager project was not unintentionally modified.
-
-Never claim success based only on an MCP request being issued.
+After every creation or modification, verify the file exists and has the expected content.
+Never claim success without verification.
 
 ---
 
-## RULE 10 — ONE QUESTION PER AskUserQuestion
+## RULE 10 — MINIMIZE USER QUESTIONS (SPEED RULE)
 
-Every `AskUserQuestion` during setup (STEP C1–C7) MUST contain EXACTLY ONE question.
+**Do ALL discovery silently in one pass. Then ask the minimum number of questions.**
 
-NEVER combine a setup question with a customization question in the same `AskUserQuestion` call.
-
-The customization requirement (STEP C8) MUST be its own separate `AskUserQuestion` call — it is NEVER combined with any setup question.
-
-Do not add a "Customization" tab, question, or option to any `AskUserQuestion` that runs during STEP C1–C7.
-
-Violation example (FORBIDDEN):
-
-```
-AskUserQuestion([
-  { question: "Where is your SAPAssetManager?" },   ← setup
-  { question: "What do you want to customize?" }     ← customization — NEVER combine with setup
-])
-```
-
-Correct pattern:
-
-```
-STEP C1 → AskUserQuestion([{ question: "Where is your SAPAssetManager?" }])
-...complete all setup steps...
-STEP C8 → AskUserQuestion([{ question: "What would you like to customize?" }])
-```
+- **Fresh project** (no CIM, no Z project): at most **2 user interactions** total
+  — one setup confirmation (or path question if SAPAssetManager not found), one customization question.
+- **Existing project** (CIM + Z project already exist): at most **1 user interaction**
+  — go straight to the customization question.
+- **NEVER** ask separately for: CIM creation, CIM name, Z project creation — batch these into
+  the single setup confirmation using the default name `Z<DetectedProjectName>`.
+- The customization question is ALWAYS its own separate `AskUserQuestion` call.
 
 ---
 
 # SSAM CUSTOMIZATION WORKFLOW
 
-Execute these steps in order.
-
-Do NOT skip steps.
-
 ---
 
-## STEP C1 — FIND SAP ASSET MANAGER
+## SETUP PHASE (replaces old STEP C1–C7)
 
-Inspect ONLY the current workspace root.
+### S1 — Silent Discovery (no user interaction)
 
-Look for a directory named exactly:
+Run all discovery in one pass without asking any questions:
 
-```
-SAPAssetManager
-```
+```bash
+# 1. Find SAPAssetManager in workspace root
+SAP_DIR="<workspace_root>/SAPAssetManager"
 
-Do NOT search Git history.
+# 2. Inspect project (version, schema)
+cat "$SAP_DIR/Application.app"
 
-Do NOT search deleted files.
+# 3. Find existing CIM (maxdepth 1 in SAP_DIR root only)
+find "$SAP_DIR" -maxdepth 1 \( -name "*.CIM" -o -name "*.cim" \) 2>/dev/null
 
-Do NOT automatically search arbitrary locations.
+# 4. Find existing Z project (sibling of SAP_DIR)
+PARENT=$(dirname "$SAP_DIR")
+ls "$PARENT/"
 
-### IF SAPAssetManager EXISTS
-
-Use the actual detected path.
-
-Set:
-
-```
-SAP_ASSET_MANAGER_PATH=<actual path>
+# 5. Confirm i18n location
+ls "$SAP_DIR/i18n/"
 ```
 
-Continue to STEP C2.
+Collect all findings silently. Do not ask questions yet.
 
-### IF SAPAssetManager DOES NOT EXIST
+### S2 — Path question (ONLY if SAPAssetManager not found)
 
-Do NOT create a new project.
+If and only if `SAPAssetManager` is not detected in the workspace root, ask ONE question:
 
-Do NOT assume a path.
+> "I could not find a SAPAssetManager folder in the workspace root. Please provide the path."
 
-Do NOT search Git history.
+Validate the path before continuing.
 
-Ask the user:
+### S3 — Setup Confirmation (ONE question for the entire setup)
 
-> "I could not find a SAPAssetManager folder in the root of the current workspace. Please provide the path to your SAP Asset Manager project."
+After silent discovery, determine which scenario applies:
 
-Accept ONE path input.
+#### Scenario A — Everything already exists (CIM + Z project found)
 
-After the user provides the path:
-
-1. Verify that the path exists.
-2. Verify that it is a directory.
-3. Verify that it contains an actual SAP Asset Manager project.
-4. Set:
+Set variables, skip to CUSTOMIZATION PHASE. **No question needed.**
 
 ```
-SAP_ASSET_MANAGER_PATH=<validated path>
+SAP_ASSET_MANAGER_PATH = <found path>
+SELECTED_CIM           = <found CIM path>
+Z_PROJECT_PATH         = <found Z project path>
+Z_PROJECT_NAME         = <detected name>
 ```
 
-If validation fails:
+#### Scenario B — Fresh project (no CIM, no Z project)
 
-**STOP** and ask the user for a valid path.
+Derive the default Z project name: `Z` + the detected `_Name` from `Application.app`
+(e.g. `_Name: "SAPAssetManager"` → `ZSAPAssetManager`).
 
----
-
-## STEP C2 — INSPECT SAP ASSET MANAGER
-
-Inspect the CURRENT SAP Asset Manager project.
-
-Use MDK MCP for MDK-specific inspection.
-
-Use filesystem inspection only where appropriate for read-only discovery.
-
-Determine:
-
-- project structure
-- application metadata
-- existing CIM files
-- existing customization structure
-- `i18n.properties` location
-- relevant MDK artifacts
-- existing Z/customization patterns
-
-DO NOT modify anything.
-
-DO NOT create anything.
-
----
-
-## STEP C3 — FIND EXISTING CIM
-
-Search ONLY the CURRENT SAP Asset Manager project for `.CIM` files.
-
-The search MUST be against files that currently exist on disk.
-
-DO NOT inspect:
-
-- Git history
-- deleted files
-- previous commits
-- branches
-- stashes
-- reflogs
-
-### IF CIM EXISTS
-
-Show the CIM files that currently exist.
-
-If multiple CIM files exist → ask the user which CIM should be used.
-
-If only one CIM exists → show the CIM and ask the user to confirm using it.
-
-Set:
+Ask ONE `AskUserQuestion` that summarises findings and proposes the full plan:
 
 ```
-SELECTED_CIM=<selected CIM>
-```
+Q: "Here's what I found and what I'll create:"
+   Found: SAPAssetManager at <path> (version <ver>)
+   No CIM file — will create: <SAP_DIR>/<Z_NAME>.cim
+   No Z project — will create: <PARENT>/<Z_NAME>/
+   i18n override will be created in Z project automatically.
 
-Continue to STEP C4.
-
-### IF NO CIM EXISTS
-
-Report:
-
-> "No CIM file was found in the current SAP Asset Manager project."
-
-Then ask:
-
-> "Shall I create a CIM file?"
+   Confirm the project name or provide a different one.
 
 Options:
-
-1. Yes
-2. No
-
-#### IF USER SELECTS NO
-
-**STOP.**
-
-Do not create:
-
-- CIM
-- Z project
-- MDK project
-- customization
-
-Explain that this customization workflow requires CIM.
-
-#### IF USER SELECTS YES
-
-Ask:
-
-> "What name should I use for the CIM file?"
-
-The user can provide a name.
-
-If the user does not provide a name, suggest:
-
-```
-ZSAPAssetManager
+  - "<Z_NAME> (default)" → proceed with default name
+  - "Custom name"        → user types name in Other field
 ```
 
-Before creation:
+Once confirmed, proceed immediately to S4. Do not ask again.
 
-1. Check the CURRENT filesystem for a conflicting file.
-2. Do NOT check Git history.
-3. Do NOT recover an old deleted CIM.
-4. Do NOT overwrite an existing file.
+#### Scenario C — Partial (CIM exists but no Z project, or vice versa)
 
-Then create the CIM using MDK MCP.
+Report exactly what exists and what is missing in the same single question as Scenario B.
 
-**IMPORTANT:** CIM creation MUST use MDK MCP.
+### S4 — Execute Setup (silent, no further questions)
 
-Do NOT manually create a CIM using generic Write/Bash if MDK MCP provides the capability.
+Execute all of the following in sequence without asking additional questions:
 
-After creation:
+1. **Create CIM** at `$SAP_DIR/$Z_NAME.cim`:
 
-1. Verify the CIM exists.
-2. Verify its structure.
-3. Set:
-
+```json
+{
+    "ProjectName": "<Z_NAME>",
+    "ApplicationName": "<Z_NAME>",
+    "ComponentVersion": "<detected version from Application.app>",
+    "IntegrationPoints": [
+        {
+            "Source": "/<Z_NAME>/i18n/i18n.properties",
+            "Target": "/SAPAssetManager/i18n/i18n.properties"
+        }
+    ]
+}
 ```
-SELECTED_CIM=<created CIM>
+
+2. **Create Z project** at `$PARENT/$Z_NAME/` — mirror non-hidden top-level folders from `SAPAssetManager/` using Node.js.
+
+3. **Create `Application.app`** in Z project root:
+
+```json
+{
+    "_Name": "<Z_NAME>",
+    "_SchemaVersion": "<detected schema version>",
+    "Version": "<detected version>"
+}
 ```
 
-If MDK MCP cannot create the required CIM:
+4. **Create `$Z_NAME/i18n/i18n.properties`** with header comments only (keys added per customization).
 
-**STOP** and report the exact limitation.
+5. **Verify** all 4 artifacts exist. Report a brief summary — one line per artifact.
 
 ---
 
-## STEP C4 — DETERMINE Z CUSTOMIZATION PROJECT
+## CUSTOMIZATION PHASE
 
-The Z/customization project MUST be a sibling of `SAPAssetManager`.
+### C1 — Ask what to customize (ONE question)
 
-Example:
-
-```
-<parent>/
-├── SAPAssetManager/
-└── ZSAPAssetManager/
-```
-
-NEVER create it inside `SAPAssetManager`.
-
-Determine:
+Only after setup verification, ask ONE `AskUserQuestion`:
 
 ```
-SAP_ASSET_MANAGER_PARENT=<parent directory>
+Q: "The <Z_NAME> project is ready. What would you like to customize?"
+Options: Override a page / Override a rule / Override an action / Custom i18n labels
 ```
 
-from the actual validated `SAP_ASSET_MANAGER_PATH`.
+If the user needs to pick a specific artifact (e.g. which page), ask ONE more targeted question.
 
-### PROJECT NAME
-
-If the user provided a CIM/project name, use it where appropriate.
-
-If no name was provided, suggest:
-
-```
-ZSAPAssetManager
-```
-
-Before creating:
-
-1. Check whether the sibling Z project currently exists.
-2. Do NOT check Git history.
-3. Do NOT recover a deleted project.
-4. Do NOT overwrite an existing project.
-
-### IF Z PROJECT ALREADY EXISTS
-
-Do NOT create another project automatically.
-
-Ask the user whether they want to:
-
-1. Use the existing Z project
-2. Provide another project name
-
-If they choose the existing project:
-
-```
-Z_PROJECT_PATH=<existing project>
-```
-
-Continue to STEP C5.
-
-### IF Z PROJECT DOES NOT EXIST
-
-Ask for confirmation before creating it.
-
-Do NOT create it automatically.
-
-Once the user confirms:
-
-Create the Z/customization project using MDK MCP.
-
-MDK MCP is MANDATORY.
-
-Do NOT manually construct an MDK project with generic filesystem commands when MDK MCP can create it.
-
----
-
-## STEP C5 — VERIFY Z PROJECT
-
-After creating or selecting the Z project, verify that:
-
-1. The directory exists.
-2. It is a sibling of `SAPAssetManager`.
-3. It is an MDK project.
-4. It contains the expected MDK project structure.
-5. `Application.app` exists.
-
-Use MDK MCP for MDK validation/inspection.
-
-### APPLICATION.APP
-
-The Z project MUST contain:
-
-```
-Application.app
-```
-
-If `Application.app` does not exist:
-
-Do NOT fabricate it.
-
-Use MDK MCP to create/repair the project if the available MDK MCP capability supports this.
-
-Then verify again.
-
-If the project cannot be made valid using MDK MCP:
-
-**STOP** and report the issue.
-
----
-
-## STEP C6 — CONFIGURE CIM
-
-The selected CIM must be used to connect the Z customization project with the SAP Asset Manager standard project.
-
-Before modifying the CIM:
-
-1. Inspect the CIM.
-2. Inspect existing entries.
-3. Preserve unrelated entries.
-4. Follow existing SSAM CIM patterns.
-
-CIM modification MUST use MDK MCP.
-
-Do NOT manually edit CIM with generic Write/Edit/Bash if MDK MCP provides the required capability.
-
-Do NOT invent CIM syntax.
-
-If the correct configuration cannot be determined:
-
-**STOP.**
-
----
-
-## STEP C7 — i18n.properties OVERRIDE
-
-The customization project MUST provide the required CIM-based override/customization for:
-
-```
-i18n.properties
-```
-
-First locate the ACTUAL SAP Asset Manager `i18n.properties`.
-
-Do NOT assume its location.
-
-Inspect the file.
-
-Determine the correct override mechanism from:
-
-- actual SSAM project
-- existing CIM
-- `mdk-ssam-patterns`
-- `mdk-ssam-workflow`
-- MDK MCP
-- MDK MCP documentation
-
-The original SAP Asset Manager `i18n.properties` MUST NOT be modified.
-
-The customization must be placed in the Z/customization project.
-
-Any MDK/CIM implementation required for this override MUST use MDK MCP.
-
-DO NOT guess CIM syntax.
-
-If the correct override cannot be determined:
-
-**STOP** and report what is missing.
-
----
-
-## STEP C8 — IMPLEMENT USER CUSTOMIZATION
-
-Only after the Z project and CIM setup is successfully verified should the actual user requirement be implemented.
+### C2 — Inspect → Implement → Verify
 
 For every customization:
 
-1. Understand the requirement.
-2. Identify the relevant SSAM functionality.
-3. Inspect the actual implementation.
-4. Identify the exact artifact being customized.
-5. Inspect existing customization patterns.
-6. Determine the correct CIM mechanism.
-7. Implement the smallest required change.
-8. Use MDK MCP for the implementation.
-9. Keep `SAPAssetManager` read-only.
-10. Verify every changed artifact.
-
-Examples of possible customizations include:
-
-- page changes
-- control changes
-- action changes
-- rule changes
-- metadata changes
-- navigation changes
-- labels
-- i18n changes
-- business logic extensions
-- additional fields
-- UI enhancements
-- other supported SSAM customizations
-
-Do NOT assume any of these exist.
-
-Inspect first.
+1. Find the artifact in `SAPAssetManager/` — do not assume its location.
+2. Read it to understand current implementation.
+3. Check if a Z override already exists — if yes, read it before modifying.
+4. Create/update the Z override (keep original filename for overrides; add `Z` prefix for new artifacts).
+5. Add the CIM `IntegrationPoint` (`Source` + `Target` only).
+6. Add any i18n keys to `$Z_NAME/i18n/i18n.properties`.
+7. Verify every changed file exists with correct content.
 
 ---
 
-## STEP C9 — VALIDATION
+## FINAL REPORT
 
-After implementation, perform a final validation.
-
-Verify:
+Print after implementation is verified:
 
 ```
-SAPAssetManager
-    ✓ Exists
-    ✓ Was not modified unintentionally
+SSAM Customization
 
-CIM
-    ✓ Exists
-    ✓ Correct CIM selected/created
-    ✓ Configuration verified
+SAP Asset Manager:    <path>
+CIM:                  <path>
+Z Project:            <path>
+Application.app:      ✓
+i18n override:        ✓
+Standard project:     ✓ Not modified
 
-Z Project
-    ✓ Exists
-    ✓ Is sibling of SAPAssetManager
-    ✓ Is valid MDK project
+Customization: <description>
 
-Application.app
-    ✓ Exists
-
-i18n.properties
-    ✓ Original file not modified
-    ✓ Required customization/override exists
-
-User customization
-    ✓ Implemented
-    ✓ Relevant files verified
-    ✓ No unrelated files changed
-```
-
-Use MDK MCP for MDK-specific validation.
-
----
-
-# GIT RULE
-
-Git is NOT part of SSAM project discovery or recovery.
-
-Do NOT inspect Git history unless the user explicitly requests:
-
-- recovery
-- historical comparison
-- deleted file investigation
-- commit analysis
-- Git restoration
-
-If the user did not explicitly request one of these:
-
-IGNORE Git history completely.
-
-For this workflow:
-
-```
-deleted in Git = does not exist
+Files changed:
+  <file 1>
+  <file 2>
+  ...
 ```
 
 ---
 
 # ERROR HANDLING
 
-If an operation fails:
-
-DO NOT continue blindly.
-
-Return:
+If any operation fails, stop immediately and report:
 
 ```
-FACT:
-What was actually found.
-
-ACTION:
-What operation was attempted.
-
-RESULT:
-What actually happened.
-
-NEXT:
-What is required to continue.
+FACT:   What was found
+ACTION: What was attempted
+RESULT: What actually happened
+NEXT:   What is needed to continue
 ```
-
-Never claim success if an operation failed.
 
 ---
 
-# UNCERTAINTY RULE
+# GIT RULE
 
-If you are uncertain about:
-
-- CIM syntax
-- SSAM project structure
-- MDK artifact structure
-- MDK MCP capability
-- customization mechanism
-- location of an artifact
-- whether an artifact can be overridden
-
-**DO NOT GUESS.**
-
-Inspect the actual project and use the available MDK MCP/SSAM skills.
-
-If still unresolved:
-
-**STOP** and ask the user.
-
----
-
-# FINAL RESPONSE
-
-Only report success after actual verification.
-
-Use this format:
-
-```
-SSAM Customization
-
-SAP Asset Manager:
-<actual validated path>
-
-CIM:
-<actual CIM path/name>
-
-Z Customization Project:
-<actual validated path>
-
-Application.app:
-✓ Verified
-
-i18n.properties override:
-✓ Verified
-
-SAP Asset Manager standard project:
-✓ Not modified
-
-Customization:
-<short description>
-
-Files changed:
-<list of actual files>
-
-Validation:
-✓ Completed
-```
-
-Do not list files that were not actually changed.
-
-Do not claim anything was created unless it was verified.
-
----
-
-# MOST IMPORTANT EXECUTION MODEL
-
-Always follow:
-
-```
-CURRENT WORKSPACE
-      ↓
-   INSPECT
-      ↓
-   REPORT
-      ↓
- ASK USER WHEN
-  DECISION NEEDED
-      ↓
-   MDK MCP
-      ↓
-    CREATE
-      ↓
-   VERIFY
-      ↓
-   INSPECT
-      ↓
- IMPLEMENT USING
-   MDK MCP
-      ↓
-   VERIFY
-      ↓
-   REPORT
-```
-
-NEVER follow:
-
-```
-Git history
-   ↓
-Recover deleted files
-   ↓
-Create something automatically
-   ↓
-Ask user afterwards
-```
-
-The current workspace and verified MDK MCP results are the source of truth.
+Never inspect Git history for any purpose in this workflow. `deleted in Git = does not exist`.

@@ -152,8 +152,8 @@ and any others present. Entity subfolders are created on demand.
 
 ### Minimal CIM file for new Z project
 
-Create `$Z_PROJECT/${Z_PROJECT}.CIM` with the CIM creation template above,
-replacing `name="ZCustomProject"` with the actual project name.
+The CIM file always lives in the **root of `SAPAssetManager/`**, not inside the Z project.
+Use the CIM creation template above, updating `ProjectName`, `ApplicationName`, and `ComponentVersion`.
 
 ---
 
@@ -257,8 +257,8 @@ After any SSAM customization (override or new artifact):
 
 - [ ] Modified file is in `$zProjectDir/` — confirmed with `ls -la "$Z_FILE"`
 - [ ] `SAPAssetManager/` is unchanged — verify no files were written there
-- [ ] CIM entry added/exists for every modified or new Z artifact
-- [ ] CIM entry `name` matches the filename (without extension) exactly (case-sensitive)
+- [ ] CIM entry added/exists for every modified or new Z artifact (Source + Target only — no Description)
+- [ ] CIM `Source` path matches the actual Z artifact path exactly (case-sensitive)
 - [ ] Relative folder structure matches the standard project structure
 - [ ] MDK validation passes: `mcp__mdk__mdk-manage` with `{ "operation": "validate" }`
 - [ ] For new JS rules: exported as default function, no syntax errors
@@ -269,20 +269,27 @@ After any SSAM customization (override or new artifact):
 
 ## CIM integrity check commands
 
+The CIM is JSON — use `node` to read it, not `grep` with XML patterns.
+
 ```bash
-# Find all JS rules in Z project
-find "$zProjectDir/Rules" -name "*.js" 2>/dev/null | xargs -I{} basename {} .js | sort > /tmp/ssam_js.txt
+# List all Source paths currently registered in CIM
+node -e "
+const cim = JSON.parse(require('fs').readFileSync('$cimFile', 'utf8'));
+console.log('=== CIM IntegrationPoints ===');
+cim.IntegrationPoints.forEach(p => console.log('  Source:', p.Source, '| Target:', p.Target));
+"
 
-# Find all rules registered in CIM
-grep -o 'name="[^"]*"' "$cimFile" 2>/dev/null | sed 's/name="//;s/"//' | sort > /tmp/ssam_cim.txt
+# List all Z project artifacts that should have CIM entries
+find "$zProjectDir" -name "*.js" -o -name "*.page" -o -name "*.action" 2>/dev/null | sort
 
-# Rules in Z project but NOT in CIM (must register these)
-echo "=== Missing CIM entries (MUST ADD) ==="
-comm -23 /tmp/ssam_js.txt /tmp/ssam_cim.txt
-
-# Rules in CIM but NOT in Z project (stale entries — review)
-echo "=== Stale CIM entries (REVIEW) ==="
-comm -13 /tmp/ssam_js.txt /tmp/ssam_cim.txt
+# Cross-check: Z artifacts missing from CIM Sources
+node -e "
+const fs = require('fs');
+const cim = JSON.parse(fs.readFileSync('$cimFile', 'utf8'));
+const sources = new Set(cim.IntegrationPoints.map(p => p.Source));
+console.log('=== Registered Sources ===');
+sources.forEach(s => console.log(s));
+" 
 ```
 
 ---
