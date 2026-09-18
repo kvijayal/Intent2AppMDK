@@ -132,16 +132,6 @@
       "sourceType": "local",
       "skillPath": "skills/review-quality-checks/SKILL.md"
     },
-    "mdk-project-setup": {
-      "source": "local",
-      "sourceType": "local",
-      "skillPath": "skills/mdk-project-setup/SKILL.md"
-    },
-    "mdk-bundler-settings": {
-      "source": "local",
-      "sourceType": "local",
-      "skillPath": "skills/mdk-bundler-settings/SKILL.md"
-    },
     "mdk-cf-mobile-services": {
       "source": "local",
       "sourceType": "local",

@@ -15,7 +15,7 @@ model: inherit
 > For every MDK or SAP Asset Manager (SSAM) task, call the MDK MCP tools **before** reading files.
 > Call order: `Skill(mdk-project-setup) — read .project.json and .service.metadata directly` → relevant `mcp__intent2app__mdk_*` tools → file edits.
 > If a tool call fails with a connection error, return immediately:
-> `BLOCKING: Intent2App MCP server not reachable at port 3999. Run: cd mcp-server && npm run start-http — then reload Claude Code. Note: @sap/mdk-mcp-server starts automatically via .mcp.json stdio.`
+> `BLOCKING: Intent2App MCP server not reachable at stdio transport. Run: cd mcp-server && node mcp-server/start.js (auto-started by Claude Code via .mcp.json — no manual start needed) — then reload Claude Code. Note: @sap/mdk-mcp-server starts automatically via .mcp.json stdio.`
 > Do NOT fall back to Glob/Grep/Read alone for MDK/SSAM queries — surface the error instead.
 
 You build SAP Mobile Development Kit (MDK) apps. You are spawned by the `/intent` MDK Fast Path
@@ -52,8 +52,6 @@ handles all workspace detection internally via BLOCKING.
 Skip the project path scan. Proceed directly to intent routing.
 
 **For all other intents:**
-
-**For all other intents:**
 1. Search for an existing MDK project starting from `projectPath`:
    ```bash
    find <projectPath> -name ".project.json" -maxdepth 3 2>/dev/null | head -5
@@ -82,9 +80,9 @@ Skip the project path scan. Proceed directly to intent routing.
        1. Protected source folders that must NOT be modified or generated into
           (e.g. SAPAssetManager — reply "none" if not applicable)
        2. An implementation folder where all new code must go
-          (e.g. ZEquinorSSAM — reply "none" if not applicable)
+          (e.g. ZCustomSSAM — reply "none" if not applicable)
        3. A CIM file to update when new rules are created
-          (e.g. ZEquinorSSAM.CIM — reply "none" if not applicable)
+          (e.g. ZCustomSSAM.cim — reply "none" if not applicable)
      Reply with the three values, or reply "skip" to use general MDK defaults with no project constraints.
      ```
    - **If user provides values** → write `CLAUDE.md` to `resolvedProjectPath` with the content below, then load and apply those rules:
@@ -194,6 +192,293 @@ Parse the output and present: ✓ passes / ✗ errors / ⚠ warnings, with exact
 3. Deploy (call `mdk-manage` with `operation: "deploy"`).
 4. On success: show the QR code URL. On failure: show raw error.
 
+### `ssam-customize`
+
+Load `mdk-ssam-patterns` skill and `mdk-ssam-workflow` skill immediately.
+
+**Phase 1 — Detect workspace (one silent Node.js script):**
+
+```javascript
+const fs = require("fs"), path = require("path");
+const projectDir = String.raw`<projectDir>`;
+
+// Find SAPAssetManager/ directly
+const sapDir  = path.join(projectDir, "SAPAssetManager");
+const sapFound = fs.existsSync(sapDir);
+
+// Find CIM file at root of SAPAssetManager
+let cimFile = null;
+if (sapFound) {
+  for (const f of fs.readdirSync(sapDir))
+    if (f.toLowerCase().endsWith(".cim")) { cimFile = path.join(sapDir, f); break; }
+}
+
+// Derive custom project name and path from CIM Source entries
+let customName = null, customDir = null;
+if (cimFile) {
+  const cim = JSON.parse(fs.readFileSync(cimFile, "utf8"));
+  const names = (cim.IntegrationPoints||[])
+    .map(ip=>(ip.Source||"").replace(/^\//,"").split("/")[0])
+    .filter(n=>n&&n!=="SAPAssetManager");
+  if (names.length) {
+    customName = names.sort((a,b)=>
+      names.filter(x=>x===b).length-names.filter(x=>x===a).length)[0];
+    customDir = path.join(projectDir, customName);
+    if (!fs.existsSync(customDir)) customDir = null;
+  }
+}
+
+// Find .service.metadata from SAPAssetManager/
+const serviceMetadata = path.join(sapDir, ".service.metadata");
+const hasServiceMetadata = fs.existsSync(serviceMetadata);
+
+console.log("sap_dir="    + (sapFound   ? sapDir        : "NOT_FOUND"));
+console.log("cim_file="   + (cimFile    ? cimFile       : "NOT_FOUND"));
+console.log("custom_name="+ (customName ? customName    : "NOT_FOUND"));
+console.log("custom_dir=" + (customDir  ? customDir     : "NOT_FOUND"));
+console.log("service_metadata=" + (hasServiceMetadata ? serviceMetadata : "NOT_FOUND"));
+```
+
+**BLOCKING conditions:**
+- `sap_dir=NOT_FOUND` → `BLOCKING: SAPAssetManager/ not found in <projectDir>. Provide the full path.`
+- `cim_file=NOT_FOUND` → `BLOCKING: No CIM file found in SAPAssetManager/. Confirm its location.`
+- `custom_name=NOT_FOUND` → `BLOCKING: No custom project entries in CIM. Provide the Z project name.`
+- `custom_dir=NOT_FOUND` → proceed to Phase 2 to create it
+
+**Phase 2 — Create Z project if it doesn't exist:**
+
+If `custom_dir=NOT_FOUND`:
+
+```javascript
+const fs = require("fs"), path = require("path");
+const sapDir    = String.raw`<sap_dir>`;
+const customDir = path.join(String.raw`<projectDir>`, String.raw`<customName>`);
+
+// Step 1 — Scaffold top-level folders from SAPAssetManager/
+for (const e of fs.readdirSync(sapDir, { withFileTypes: true }))
+  if (e.isDirectory()) fs.mkdirSync(path.join(customDir, e.name), { recursive: true });
+console.log("Z project scaffolded: " + customDir);
+
+// Step 2 — Copy .service.metadata from SAPAssetManager/ to Z project
+const srcMeta = path.join(sapDir, ".service.metadata");
+const dstMeta = path.join(customDir, ".service.metadata");
+if (fs.existsSync(srcMeta)) {
+  fs.copyFileSync(srcMeta, dstMeta);
+  console.log("service.metadata copied from SAPAssetManager/");
+}
+```
+
+Then call MDK MCP server to scaffold full MDK project structure:
+```
+mcp__mdk__mdk-create {
+  "folderRootPath": "<customDir>",
+  "scope": "project",
+  "templateType": "base"
+}
+```
+
+This creates the proper MDK project structure — `.project.json`, `Application.app`,
+`Pages/`, `Actions/`, `Rules/`, `i18n/` — using the service from SAPAssetManager.
+
+Then create the CIM file:
+```javascript
+const cimPath = path.join(String.raw`<sap_dir>`, String.raw`<customName>` + ".cim");
+if (!fs.existsSync(cimPath)) {
+  fs.writeFileSync(cimPath, JSON.stringify({ IntegrationPoints: [] }, null, 4));
+  console.log("CIM created: " + cimPath);
+}
+```
+
+**Phase 3 — Understand the requirement:**
+
+Read `requirement` from brief. If empty →
+```
+BLOCKING: What would you like to customize or add?
+  e.g. "Override WorkOrders_Detail rule to hide completed orders"
+       "Add a new page for equipment inspection"
+       "Create a new rule for visibility logic"
+```
+
+**Phase 4 — Implement the customization:**
+
+Follow `mdk-ssam-patterns` skill exactly:
+
+1. Read the relevant file from `SAPAssetManager/` for reference — use `Read` tool
+2. Create the override in `<customDir>/` mirroring the SAP folder structure
+3. **Never write to `SAPAssetManager/`**
+4. For every new file created → add a CIM entry immediately:
+
+```javascript
+const fs   = require("fs");
+const cim  = JSON.parse(fs.readFileSync(cimFile, "utf8"));
+cim.IntegrationPoints = cim.IntegrationPoints || [];
+cim.IntegrationPoints.push({
+  "Source": "/<customName>/Rules/WorkOrders/WorkOrders_Detail.js",
+  "Target": "/SAPAssetManager/Rules/WorkOrders/WorkOrders_Detail.js"
+});
+fs.writeFileSync(cimFile, JSON.stringify(cim, null, 4));
+```
+
+**Phase 5 — Validate:**
+```
+mcp__mdk__mdk-manage { "folderRootPath": "<customDir>", "operation": "validate" }
+```
+
+Report: Z project created/updated, files created, CIM entries added, validation result.
+
+### `ssam-upgrade`
+
+Load `mdk-ssam-upgrade` skill and `mdk-ssam-workflow` skill. Follow the skill phases exactly.
+
+**Execution rules — no bash, no improvised commands:**
+- Each phase = save the script from the skill → run as `node /tmp/script.js <args>` → read output
+- **Never** use `find`, `ls`, `dir`, `cat`, `grep`, `git` — all operations via Node.js
+- BLOCKING for every missing input — never guess paths
+
+**Phase 1** — save to `/tmp/ssam_detect.js`, run:
+`node /tmp/ssam_detect.js "<projectDir>"`
+
+**Phase 3** — save to `/tmp/ssam_cim_audit.js`, run:
+`node /tmp/ssam_cim_audit.js "<cimFile>" "<customDir>"`
+
+**Phase 5** — save to `/tmp/ssam_upgrade.js`, run:
+`node /tmp/ssam_upgrade.js "<cimFile>" "<customDir>" "<sapDir>" "<newSapZip>" "<projectDir>"`
+
+Do not deviate. Surface all BLOCKING messages to the developer.
+
+### `ssam-customize`
+
+Load `mdk-ssam-patterns` skill and `mdk-ssam-workflow` skill immediately.
+
+**Phase 1 — Detect workspace (one silent Node.js script):**
+
+```javascript
+const fs = require("fs"), path = require("path");
+const projectDir = String.raw`<projectDir>`;
+
+// Find SAPAssetManager/ directly
+const sapDir  = path.join(projectDir, "SAPAssetManager");
+const sapFound = fs.existsSync(sapDir);
+
+// Find CIM file at root of SAPAssetManager
+let cimFile = null;
+if (sapFound) {
+  for (const f of fs.readdirSync(sapDir))
+    if (f.toLowerCase().endsWith(".cim")) { cimFile = path.join(sapDir, f); break; }
+}
+
+// Derive custom project name and path from CIM Source entries
+let customName = null, customDir = null;
+if (cimFile) {
+  const cim = JSON.parse(fs.readFileSync(cimFile, "utf8"));
+  const names = (cim.IntegrationPoints||[])
+    .map(ip=>(ip.Source||"").replace(/^\//,"").split("/")[0])
+    .filter(n=>n&&n!=="SAPAssetManager");
+  if (names.length) {
+    customName = names.sort((a,b)=>
+      names.filter(x=>x===b).length-names.filter(x=>x===a).length)[0];
+    customDir = path.join(projectDir, customName);
+    if (!fs.existsSync(customDir)) customDir = null;
+  }
+}
+
+// Find .service.metadata from SAPAssetManager/
+const serviceMetadata = path.join(sapDir, ".service.metadata");
+const hasServiceMetadata = fs.existsSync(serviceMetadata);
+
+console.log("sap_dir="    + (sapFound   ? sapDir        : "NOT_FOUND"));
+console.log("cim_file="   + (cimFile    ? cimFile       : "NOT_FOUND"));
+console.log("custom_name="+ (customName ? customName    : "NOT_FOUND"));
+console.log("custom_dir=" + (customDir  ? customDir     : "NOT_FOUND"));
+console.log("service_metadata=" + (hasServiceMetadata ? serviceMetadata : "NOT_FOUND"));
+```
+
+**BLOCKING conditions:**
+- `sap_dir=NOT_FOUND` → `BLOCKING: SAPAssetManager/ not found in <projectDir>. Provide the full path.`
+- `cim_file=NOT_FOUND` → `BLOCKING: No CIM file found in SAPAssetManager/. Confirm its location.`
+- `custom_name=NOT_FOUND` → `BLOCKING: No custom project entries in CIM. Provide the Z project name.`
+- `custom_dir=NOT_FOUND` → proceed to Phase 2 to create it
+
+**Phase 2 — Create Z project if it doesn't exist:**
+
+If `custom_dir=NOT_FOUND`:
+
+```javascript
+const fs = require("fs"), path = require("path");
+const sapDir    = String.raw`<sap_dir>`;
+const customDir = path.join(String.raw`<projectDir>`, String.raw`<customName>`);
+
+// Step 1 — Scaffold top-level folders from SAPAssetManager/
+for (const e of fs.readdirSync(sapDir, { withFileTypes: true }))
+  if (e.isDirectory()) fs.mkdirSync(path.join(customDir, e.name), { recursive: true });
+console.log("Z project scaffolded: " + customDir);
+
+// Step 2 — Copy .service.metadata from SAPAssetManager/ to Z project
+const srcMeta = path.join(sapDir, ".service.metadata");
+const dstMeta = path.join(customDir, ".service.metadata");
+if (fs.existsSync(srcMeta)) {
+  fs.copyFileSync(srcMeta, dstMeta);
+  console.log("service.metadata copied from SAPAssetManager/");
+}
+```
+
+Then call MDK MCP server to scaffold full MDK project structure:
+```
+mcp__mdk__mdk-create {
+  "folderRootPath": "<customDir>",
+  "scope": "project",
+  "templateType": "base"
+}
+```
+
+This creates the proper MDK project structure — `.project.json`, `Application.app`,
+`Pages/`, `Actions/`, `Rules/`, `i18n/` — using the service from SAPAssetManager.
+
+Then create the CIM file:
+```javascript
+const cimPath = path.join(String.raw`<sap_dir>`, String.raw`<customName>` + ".cim");
+if (!fs.existsSync(cimPath)) {
+  fs.writeFileSync(cimPath, JSON.stringify({ IntegrationPoints: [] }, null, 4));
+  console.log("CIM created: " + cimPath);
+}
+```
+
+**Phase 3 — Understand the requirement:**
+
+Read `requirement` from brief. If empty →
+```
+BLOCKING: What would you like to customize or add?
+  e.g. "Override WorkOrders_Detail rule to hide completed orders"
+       "Add a new page for equipment inspection"
+       "Create a new rule for visibility logic"
+```
+
+**Phase 4 — Implement the customization:**
+
+Follow `mdk-ssam-patterns` skill exactly:
+
+1. Read the relevant file from `SAPAssetManager/` for reference — use `Read` tool
+2. Create the override in `<customDir>/` mirroring the SAP folder structure
+3. **Never write to `SAPAssetManager/`**
+4. For every new file created → add a CIM entry immediately:
+
+```javascript
+const fs   = require("fs");
+const cim  = JSON.parse(fs.readFileSync(cimFile, "utf8"));
+cim.IntegrationPoints = cim.IntegrationPoints || [];
+cim.IntegrationPoints.push({
+  "Source": "/<customName>/Rules/WorkOrders/WorkOrders_Detail.js",
+  "Target": "/SAPAssetManager/Rules/WorkOrders/WorkOrders_Detail.js"
+});
+fs.writeFileSync(cimFile, JSON.stringify(cim, null, 4));
+```
+
+**Phase 5 — Validate:**
+```
+mcp__mdk__mdk-manage { "folderRootPath": "<customDir>", "operation": "validate" }
+```
+
+Report: Z project created/updated, files created, CIM entries added, validation result.
 
 ### `ssam-upgrade`
 

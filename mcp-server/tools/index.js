@@ -35,10 +35,10 @@ import fiori_download_odata_metadata from "./fiori-mcp/fiori_download_odata_meta
 // These mirror the official @sap/mdk-mcp-server tools (Apache-2.0).
 // The SAP server is also wired in .mcp.json as "mdk" for full fidelity.
 // Local tools are offline-robust fallbacks (no Yeoman/vector embeddings needed).
-import mdk_create          from "./mdk-mcp/mdk_create.js";       // mirrors: mdk-create
-import mdk_gen             from "./mdk-mcp/mdk_gen.js";          // mirrors: mdk-gen
-import mdk_manage          from "./mdk-mcp/mdk_manage.js";       // mirrors: mdk-manage
-import mdk_get_docs        from "./mdk-mcp/mdk_get_docs.js";     // mirrors: mdk-docs
+import          from "./mdk-mcp/.js";       // mirrors: mdk-create
+import             from "./mdk-mcp/.js";          // mirrors: mdk-gen
+import          from "./mdk-mcp/.js";       // mirrors: mdk-manage
+import        from "./mdk-mcp/.js";     // mirrors: mdk-docs
 import mdk_mobile_services from "./mdk-mcp/mdk_mobile_services.js"; // supplementary: not in SAP server
 
 export const allTools = [
@@ -53,6 +53,5 @@ export const allTools = [
   cap_search_model, cap_search_docs,
   // Fiori
   fiori_search_docs, fiori_list_apps, fiori_download_odata_metadata,
-  // MDK
-  mdk_create, mdk_gen, mdk_manage, mdk_get_docs, mdk_mobile_services
+  // MDK, mdk_mobile_services
 ];
