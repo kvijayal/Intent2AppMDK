@@ -37,7 +37,7 @@ export default {
       switch (operation) {
         case "build": {
           if (!mdkBinary) return { content: [{ type: "text", text: "Error: MDK tools not found. Please ensure @sap/mdk-tools is installed: npm install -g @sap/mdk-tools" }] };
-          const buildScript = `${mdkBinary} build --target zip --project "${folderRootPath}"`;
+          const buildScript = `"${mdkBinary}" build --target zip --project "${folderRootPath}"`;
           const buildResult = runCommand(buildScript);
           return { content: [{ type: "text", text: `MDK Build completed successfully.\n\n${buildResult}` }] };
         }
@@ -90,7 +90,7 @@ export default {
 
           const externalsString = resolvedExternals.length > 0 ? `--externals "${resolvedExternals.join(",")}"` : "";
           const deployParts = [
-            `${mdkBinary} deploy`,
+            `"${mdkBinary}" deploy`,
             `--target mobile`,
             `--name ${mobileServiceAppName}`,
             `--showqr`,
@@ -110,11 +110,11 @@ export default {
 
         case "validate": {
           if (mdkBinary) {
-            const validationCommand = `${mdkBinary} validate --project "${folderRootPath}"`;
+            const validationCommand = `"${mdkBinary}" validate --project "${folderRootPath}"`;
             return {
               content: [{
                 type: "text",
-                text: `# MDK Project Validation\n\nFor large projects, validation may take several minutes and can exceed the MCP timeout limit.\n\n**Please run the following command directly in your terminal:**\n\n\`\`\`bash\n${validationCommand}\n\`\`\`\n\n**Or navigate to your project and run:**\n\n\`\`\`bash\ncd "${folderRootPath}"\n${mdkBinary} validate --project .\n\`\`\`\n\nThis will validate your MDK project and display any errors or warnings.`
+                text: `# MDK Project Validation\n\nFor large projects, validation may take several minutes and can exceed the MCP timeout limit.\n\n**Please run the following command directly in your terminal:**\n\n\`\`\`bash\n${validationCommand}\n\`\`\`\n\n**Or navigate to your project and run:**\n\n\`\`\`bash\ncd "${folderRootPath}"\n"${mdkBinary}" validate --project .\n\`\`\`\n\nThis will validate your MDK project and display any errors or warnings.`
               }]
             };
           }
@@ -123,7 +123,7 @@ export default {
 
         case "migrate": {
           if (!mdkBinary) return { content: [{ type: "text", text: "Error: MDK tools not found. Please ensure @sap/mdk-tools is installed." }] };
-          const migrationScript = `${mdkBinary} migrate --project "${folderRootPath}"`;
+          const migrationScript = `"${mdkBinary}" migrate --project "${folderRootPath}"`;
           const migrateResult = runCommand(migrationScript);
           return { content: [{ type: "text", text: `MDK Migration completed successfully.\n\n${migrateResult}` }] };
         }
