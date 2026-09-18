@@ -25,6 +25,8 @@ These are non-negotiable — violating them breaks the base product or makes upg
 ```
 Project root/
   SAPAssetManager/     ← READ ONLY — never modify or generate files here
+    ZEquinorSSAM.CIM   ← CIM lives in the root of SAPAssetManager/
+  ZEquinorSSAM/        ← ALL custom code goes here
   <CUSTOM_DIR>/       ← ALL custom code goes here (name derived from CIM)
     Rules/             ← custom JavaScript rules
     Pages/             ← custom page overrides
@@ -104,6 +106,29 @@ The `.CIM` file registers every custom rule so the MDK runtime knows to use it.
 
 The CIM file is JSON format. Add a new entry to `IntegrationPoints` array:
 
+Each entry in `IntegrationPoints` must contain **only** `Source` and `Target`:
+
+```json
+{
+    "Source": "/ZEquinorSSAM/Rules/WorkOrders/WorkOrders_IsVisible.js",
+    "Target": "/SAPAssetManager/Rules/WorkOrders/WorkOrders_IsVisible.js"
+}
+```
+
+`Source` = path to the Z/custom artifact. `Target` = path to the standard artifact it replaces.
+**Never add a `Description` or any other field.**
+
+### How to check for missing CIM entries
+
+```bash
+# List all Source paths registered in CIM (JSON format)
+node -e "
+const cim = JSON.parse(require('fs').readFileSync('./SAPAssetManager/ZEquinorSSAM.CIM', 'utf8'));
+cim.IntegrationPoints.map(p => p.Source).sort().forEach(s => console.log(s));
+"
+
+# List all .js files in ZEquinorSSAM/Rules
+find ./ZEquinorSSAM/Rules -name "*.js" | sort
 ```json
 {
   "Source": "/<CUSTOM_DIR>/Rules/WorkOrders/WorkOrders_IsVisible.js",
