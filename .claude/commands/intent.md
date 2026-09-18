@@ -16,8 +16,8 @@ You are running the **Intent2App** end-to-end flow in the MAIN thread (so you �
 
 > **HARD RULE — MDK MCP server is mandatory for ALL MDK and SSAM queries.**
 > Never answer MDK or SAP Asset Manager (SSAM) questions using only Glob/Grep/Read.
-> Always call MDK MCP tools first. If the server is unreachable at port 3999, stop and tell the developer:
-> "Intent2App MCP server is not reachable at port 3999. Start it with: cd mcp-server && npm run start-http. The SAP @sap/mdk-mcp-server starts automatically via .mcp.json — no manual action needed."
+> Always call MDK MCP tools first. If the server is unreachable at stdio transport, stop and tell the developer:
+> "Intent2App MCP server is not reachable at stdio transport. Start it with: cd mcp-server && node mcp-server/start.js (auto-started by Claude Code via .mcp.json — no manual start needed). The SAP @sap/mdk-mcp-server starts automatically via .mcp.json — no manual action needed."
 > Do NOT fall back to file-system tools for MDK/SSAM queries — surface the error instead.
 
 **MDK dependencies (run only when requirement mentions mobile, field worker, offline, barcode scanner, MDK, or SAP Mobile Services — skip entirely for CAP/Fiori/UI5).**
@@ -50,43 +50,75 @@ If MDK is in scope, print this reminder (do not block):
 
 **STEP 0-A — Detect workspace and developer type.**
 
-**First — silently scan the workspace for existing projects:**
-```bash
-find . -name ".project.json" -maxdepth 4 2>/dev/null | head -5
-find . -name ".cdsrc.json" -maxdepth 3 2>/dev/null | head -3
-find . -name ".service.metadata" -maxdepth 4 2>/dev/null | head -3
-find . -type d -name "SAPAssetManager" -maxdepth 4 2>/dev/null | head -3
-find . -name "*.CIM" -maxdepth 6 2>/dev/null | head -3
+**First — silently scan the workspace using Node.js (no bash permission popups):**
+
+```javascript
+const fs = require("fs"), path = require("path");
+const cwd = process.cwd();
+const find = (name, maxDepth=4) => {
+  const results = [];
+  function walk(dir, depth) {
+    if (depth > maxDepth) return;
+    try { for (const e of fs.readdirSync(dir, {withFileTypes:true})) {
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) walk(p, depth+1);
+      else if (e.name === name || e.name.endsWith(name)) results.push(p);
+    }} catch(_) {}
+  }
+  walk(cwd, 0); return results;
+};
+const projectJson    = find(".project.json");
+const cdsrc          = find(".cdsrc.json");
+const serviceMetadata= find(".service.metadata");
+const sapAssetMgr    = fs.existsSync(path.join(cwd,"SAPAssetManager"));
+const cimFiles       = find(".CIM").concat(find(".cim"));
+console.log(JSON.stringify({projectJson,cdsrc,serviceMetadata,sapAssetMgr,cimFiles}));
 ```
 
-**If an existing MDK project is found** (`.project.json` exists):
-- Call `Skill(mdk-project-setup)` with `{ "projectDir": "<detected-path>" }`
-- **Check if this is a SAP Asset Manager project:** use the scan results above — if a `SAPAssetManager/` directory OR a `.CIM` file was detected anywhere in the workspace, this is an SSAM project.
-  - **SSAM project detected** → ❓ **AskUserQuestion**: "SAP Asset Manager project detected. What would you like to do?"
+**Route based on scan results:**
+
+**If `SAPAssetManager/` or `.CIM` file detected** → SSAM project:
+- ❓ **AskUserQuestion**: "SAP Asset Manager project detected. What would you like to do?"
+  Options:
+  - "Upgrade to a new SSAM version"
+  - "Customize / add enhancements to the existing project"
+  - **Upgrade** → jump to SSAM Upgrade Flow (spawn agent immediately)
+  - **Customize** → jump to SSAM Customize Flow (spawn agent immediately)
+
+**If `.project.json` found (standalone MDK):**
+- ❓ **AskUserQuestion**: "Found an existing MDK project. What would you like to do?"
+  Options:
+  - "Modify this project — add pages, entities, actions"
+  - "Deploy, build, validate, or manage this project"
+  - "Generate new pages or actions for an entity"
+- Jump to `/intent-mdk` fast path STEP 2c with `projectDir` and project context.
+
+**If no existing project found** → ❓ **AskUserQuestion** (Q1 — top level only):
+"What type of app are you building?"
+  Options:
+  - "CAP / Fiori / UI5 — backend service, Fiori Elements, or freestyle UI5 on BTP"
+  - "MDK — mobile app for iOS/Android"
+
+**Route Q1:**
+- **CAP / Fiori / UI5** → proceed to PRE-FLIGHT 4 then STEP 0
+- **MDK** → ask Q2:
+  ❓ **AskUserQuestion** (Q2):
+  "Which type of MDK application?"
+  Options:
+  - "Standalone MDK — build a new custom mobile app"
+  - "SAP Asset Manager (SSAM) — Upgrade or Customize an existing project"
+
+  - **Standalone MDK** → load `/intent-mdk` command and follow MDK Fast Path STEP 1
+  - **SAP Asset Manager** → ask Q3:
+    ❓ **AskUserQuestion** (Q3):
+    "What would you like to do with SAP Asset Manager?"
     Options:
     - "Upgrade to a new SSAM version"
     - "Customize / add enhancements to the existing project"
+    - **Upgrade** → jump to SSAM Upgrade Flow
+    - **Customize** → jump to SSAM Customize Flow
 
-    - **Upgrade** → jump to SSAM Upgrade Flow (spawn agent immediately)
-    - **Customize** → jump to SSAM Customize Flow (spawn agent immediately)
-  - **Not an SSAM project** → show the standard Standalone MDK options:
-- ❓ **AskUserQuestion**: "Found an existing MDK project at `<path>` (App: `<appName>`, Schema: `<version>`). What would you like to do?"
-  Options:
-  - "Modify this existing project — add pages, entities, actions, or features"
-  - "Deploy, build, validate, or manage this project"
-  - "Generate new pages or actions for an entity in this project"
-- Jump to MDK Fast Path STEP 2c, passing `projectDir` and project context — skip STEP 1 and Mobile Services setup.
-
-**If no existing project found** → ❓ **AskUserQuestion** (single question — all options including SSAM):
-"What would you like to do?"
-  Options:
-  - "Build a new CAP / Fiori / UI5 app on BTP"
-  - "Build a new MDK mobile app"
-  - "Upgrade SAP Asset Manager (SSAM) to a new version"
-  - "Customize / enhance an existing SAP Asset Manager (SSAM) project"
-
-**Route answer:**
-- **CAP / Fiori / UI5** → proceed to PRE-FLIGHT 4 then STEP 0
+PRE-FLIGHT 4 then STEP 0
 - **New MDK app** → jump to MDK Fast Path STEP 1
 - **Upgrade SSAM** → jump to SSAM Upgrade Flow (spawn agent immediately — no further questions)
 - **Customize SSAM** → jump to SSAM Customize Flow (spawn agent immediately — no further questions)PRE-FLIGHT 4 (Yeoman + CDS checks) and then STEP 0.
@@ -120,7 +152,7 @@ Call `mcp__intent2app__validate_namespace` with `{ "namespace": "com.preflight.c
   ```
 
   ```bash
-  npm run start-http &
+  node mcp-server/start.js (auto-started by Claude Code via .mcp.json — no manual start needed) &
   ```
 
   Wait 3 seconds, then re-probe `mcp__intent2app__validate_namespace`.
@@ -130,7 +162,7 @@ Call `mcp__intent2app__validate_namespace` with `{ "namespace": "com.preflight.c
 
     ```text
     ⚠ MCP server could not be started automatically.
-    To start it manually: cd mcp-server && npm install && npm run start-http
+    To start it manually: cd mcp-server && npm install && node mcp-server/start.js (auto-started by Claude Code via .mcp.json — no manual start needed)
     Then re-run /intent <your-requirement>.
     ```
 
@@ -291,14 +323,14 @@ Do NOT check CF login here — check it only when a CF-dependent intent is ident
 
 **MDK MCP server check (mandatory — run immediately after MDK CLI check):**
 
-Call `mcp__intent2app__validate_namespace` with `{ "namespace": "com.preflight" }` as a lightweight probe to confirm the Intent2App MCP server is running.
+Call `mcp__intent2app__validate_namespace` with `{ "namespace": "com.preflight" }` as a lightweight probe (if this fails, the Intent2App stdio server failed to start — check mcp-server/start.js logs) to confirm the Intent2App MCP server is running.
 
-- **Succeeds** → print `✓ Intent2App MCP server running at port 3999. SAP MDK server (@sap/mdk-mcp-server) starts automatically via .mcp.json.` Done.
+- **Succeeds** → print `✓ Intent2App MCP server running at stdio transport. SAP MDK server (@sap/mdk-mcp-server) starts automatically via .mcp.json.` Done.
 - **Fails / connection refused** → **HARD STOP**:
   ```
-  ✗ MDK MCP server is not reachable at http://localhost:3999/mcp.
+  ✗ MDK MCP server is not reachable at stdio (auto-started by Claude Code).
   All MDK and SSAM queries require the MDK MCP server.
-  To start it: cd mcp-server && npm run start-http
+  To start it: cd mcp-server && node mcp-server/start.js (auto-started by Claude Code via .mcp.json — no manual start needed)
   Then reload the Claude Code window and re-run /intent.
   ```
   Do NOT proceed. Do NOT fall back to file-system tools for MDK questions.

@@ -42,8 +42,8 @@ WorkspaceRoot/
 ```
 
 > **Note:** The exact folder names depend on the specific customer project. The Z project name
-> is typically prefixed with `Z` (e.g. `ZEquinorSSAM`, `ZCustomSSAM`, `ZMyCompanySSAM`).
-> Always detect the actual names from the workspace — never assume `ZEquinorSSAM`.
+> is typically prefixed with `Z` (e.g. `ZCustomSSAM`, `ZMyCompanySSAM` — always detect from CIM).
+> Always detect the actual name from the CIM file — never hardcode a Z project name.
 
 ### Hard constraints
 
@@ -64,9 +64,11 @@ It lives in the **root of `SAPAssetManager/`** — not inside the Z project, not
 
 ### Detect CIM location
 
-```bash
-# Search ONLY in the root of SAPAssetManager/ — maxdepth 1
-find "$SAP_DIR" -maxdepth 1 \( -name "*.CIM" -o -name "*.cim" \) 2>/dev/null | head -5
+```javascript
+// Node.js — search CIM at root of SAPAssetManager only
+const files = fs.readdirSync(sapDir);
+const cimFile = files.find(f => f.toLowerCase().endsWith(".cim"));
+console.log("CIM:", cimFile ? path.join(sapDir, cimFile) : "NOT_FOUND");
 ```
 
 ### CIM file — name and location
@@ -121,10 +123,62 @@ add a new entry to the `IntegrationPoints` array:
 
 When the user approves creating a new Z/custom project from scratch:
 
-### Folder structure to create
+### Step 1 — Scaffold top-level folders from SAPAssetManager/
 
-Mirror the **complete** SAPAssetManager/ folder tree — never hardcode folder names.
-A real SSAM project contains Actions/, Pages/, Rules/, Services/, Styles/, i18n/,
+```javascript
+const fs = require("fs"), path = require("path");
+// Mirror only top-level folders — subfolders created on demand
+for (const e of fs.readdirSync(sapDir, { withFileTypes: true }))
+  if (e.isDirectory()) fs.mkdirSync(path.join(customDir, e.name), { recursive: true });
+console.log("Z project scaffolded: " + customDir);
+```
+
+### Step 2 — Copy .service.metadata from SAPAssetManager/
+
+The Z project needs the service metadata to connect to the OData service.
+Copy it from `SAPAssetManager/` — never fetch new metadata:
+
+```javascript
+const srcMeta = path.join(sapDir, ".service.metadata");
+const dstMeta = path.join(customDir, ".service.metadata");
+if (fs.existsSync(srcMeta)) {
+  fs.copyFileSync(srcMeta, dstMeta);
+  console.log("service.metadata copied → " + dstMeta);
+} else {
+  console.log("⚠ No .service.metadata in SAPAssetManager/ — MDK create may need it");
+}
+```
+
+### Step 3 — Create real MDK project structure via MCP
+
+Use `mcp__mdk__mdk-create` to generate proper MDK project files
+(`.project.json`, `Application.app`, `Pages/`, `Actions/`, `Rules/`, `i18n/`):
+
+```
+mcp__mdk__mdk-create {
+  "folderRootPath": "<customDir>",
+  "scope": "project",
+  "templateType": "base"
+}
+```
+
+This ensures the Z project has a complete, valid MDK structure that the
+MDK tooling can validate and deploy — not just empty folders.
+
+### Step 4 — Create CIM file in SAPAssetManager/
+
+```javascript
+const cimName = customName + ".cim";
+const cimPath = path.join(sapDir, cimName);
+if (!fs.existsSync(cimPath)) {
+  fs.writeFileSync(cimPath, JSON.stringify({ IntegrationPoints: [] }, null, 4));
+  console.log("CIM created: " + cimPath);
+} else {
+  console.log("CIM already exists: " + cimPath);
+}
+```
+
+CIM file always lives in `SAPAssetManager/` root — not inside the Z project.
 Formatters/, Converters/, and entity-specific subfolders inside each.
 
 ```javascript
@@ -213,41 +267,23 @@ customer-specific and prevents naming collisions with future SAP standard additi
 
 ### Find a page by keyword
 
-```bash
-find "$SAP_DIR/Pages" -name "*.page" | xargs grep -l "<keyword>" 2>/dev/null | head -10
-find "$SAP_DIR/Pages" -name "*<keyword>*" 2>/dev/null | head -10
-```
+Use `Glob` tool: `SAPAssetManager/Pages/**/*.page` then `Grep` for the keyword.
 
 ### Find a rule by function name
 
-```bash
-find "$SAP_DIR/Rules" -name "*.js" | xargs grep -l "<functionName>" 2>/dev/null | head -10
-find "$SAP_DIR/Rules" -name "*<keyword>*" 2>/dev/null | head -10
-```
+Use `Glob` tool: `SAPAssetManager/Rules/**/*.js` then `Grep` for the function name.
 
 ### Find an action by keyword
 
-```bash
-find "$SAP_DIR/Actions" -name "*.action" | xargs grep -l "<keyword>" 2>/dev/null | head -10
-find "$SAP_DIR/Actions" -name "*<keyword>*" 2>/dev/null | head -10
-```
+Use `Glob` tool: `SAPAssetManager/Actions/**/*.action` then `Grep` for the keyword.
 
 ### Find which page uses a specific rule
 
-```bash
-grep -r "<RuleName>" "$SAP_DIR/Pages" 2>/dev/null | head -10
-```
+*(Use `Read`, `Glob`, or `Grep` tool instead of bash for this operation)*
 
 ### Detect full relative path (for Z structure replication)
 
-```bash
-# Given a found file path, compute its relative path from SAP_DIR
-FOUND_FILE="/path/to/SAPAssetManager/Rules/Operations/ConfirmOperation.js"
-RELATIVE="${FOUND_FILE#$SAP_DIR/}"
-# Result: Rules/Operations/ConfirmOperation.js
-echo "Relative path: $RELATIVE"
-echo "Z target:     $zProjectDir/$RELATIVE"
-```
+*(Use `Read`, `Glob`, or `Grep` tool instead of bash for this operation)*
 
 ---
 
@@ -290,13 +326,32 @@ const sources = new Set(cim.IntegrationPoints.map(p => p.Source));
 console.log('=== Registered Sources ===');
 sources.forEach(s => console.log(s));
 " 
+```javascript
+const fs = require("fs"), path = require("path");
+const cim = JSON.parse(fs.readFileSync(cimFile, "utf8"));
+const registered = new Set((cim.IntegrationPoints||[])
+  .map(ip => path.basename(ip.Source||"", ".js")));
+const rules = [];
+function scan(d) {
+  if (!fs.existsSync(d)) return;
+  for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+    const p = path.join(d, e.name);
+    if (e.isDirectory()) scan(p);
+    else if (e.name.endsWith(".js")) rules.push(path.basename(e.name, ".js"));
+  }
+}
+scan(path.join(zProjectDir, "Rules"));
+const missing = rules.filter(r => !registered.has(r));
+const stale   = [...registered].filter(r => !rules.includes(r));
+console.log("Missing from CIM (ADD):", missing);
+console.log("Stale CIM entries:", stale);
 ```
 
 ---
 
 ## Related skills
 
-- `mdk-ssam-patterns` — ZEquinorSSAM-specific conventions and override patterns
+- `mdk-ssam-patterns` — SSAM project conventions and override patterns
 - `mdk-ssam-upgrade` — SAP Metadata Upgrade Tool workflow (phases 1–9)
 - `mdk-app-update` — `OnWillUpdate`/`OnDidUpdate` for schema-breaking upgrades
 - `mdk-environment-deploy` — deploy upgraded/customized app to dev/QA/prod

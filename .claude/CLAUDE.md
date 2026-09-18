@@ -48,31 +48,31 @@ Omitting either one silently breaks RBAC — every OData call returns 403 even w
 
 Use `cds.log('<module>')` in CAP handlers; use the UI5 `Log` module (`sap/base/Log`) in the frontend.
 
-### 5. MDK MCP server is mandatory for ALL MDK and SSAM queries
+### 5. MDK MCP servers auto-start — no manual action needed
 
-**Every new MDK project must follow the 6-phase workflow (Phase 1: Env Setup → Phase 2: Project
-Creation → Phase 3: Service Config → Phase 4: UI Development → Phase 5: Rules & Logic →
-Phase 6: Build & Deploy). Load `mdk-patterns` skill at the start of any `create-project` task.**
+Both MCP servers start automatically when Claude Code opens this project via `.mcp.json`:
 
-**Never answer MDK or SAP Asset Manager (SSAM) questions using only file-system tools (Glob, Grep, Read).**
-Always call the MDK MCP tools first:
-
-Both the **local Intent2App tools** (`mcp__intent2app__mdk_*`) and the **official SAP MDK server tools** (`mcp__mdk__mdk-*`) are available. Use local tools for offline-robust fallback; prefer SAP server tools for full fidelity (Yeoman scaffolding, vector doc search).
-
-| Task | Local tool | SAP server tool |
+| Server | Type | Tools |
 |---|---|---|
-| Scaffold / create project | `mcp__intent2app__mdk_create` | `mcp__mdk__mdk-create` |
-| Generate pages, actions, rules | `mcp__intent2app__mdk_gen` | `mcp__mdk__mdk-gen` |
-| Validate, build, deploy, QR code | `mcp__intent2app__mdk_manage` | `mcp__mdk__mdk-manage` |
-| Look up schemas and docs | `mcp__intent2app__mdk_get_docs` | `mcp__mdk__mdk-docs` |
-| Fetch Mobile Services metadata | *(via mdk_mobile_services)* | `mcp__mdk__mdk-fetch-mobile-metadata` |
-| Discover Mobile Services apps | `mcp__intent2app__mdk_mobile_services` | *(not in SAP server)* |
-| Read existing project context | `mdk-project-setup` **skill** | — |
-| Check / fix bundler externals | `mdk-bundler-settings` **skill** | — |
+| `Intent2App` | stdio (auto-started) | CAP, Fiori, UI5, MDK mobile services |
+| `@sap/mdk-mcp-server` | stdio (auto-started) | mdk-create, mdk-gen, mdk-manage, mdk-docs |
 
-If a tool call fails with a connection error, stop and tell the developer:
-> "Intent2App MCP server is not reachable at port 3999. To start: cd mcp-server && npm run start-http. The SAP MDK server starts automatically — no manual start needed."
-Do NOT fall back to file-system tools for MDK/SSAM questions — surface the error instead.
+If a server fails to start → reload the Claude Code window. **Never tell the developer to run `npm run start-http`** — that is HTTP mode, not used.
+
+**For MDK app development** (`create-project`, `gen`, `manage`, `validate`, `deploy`):
+Use MCP tools. Prefer `mcp__mdk__*` (SAP server); use `mcp__intent2app__mdk_*` as fallback.
+
+**For SSAM upgrade/customize** (`ssam-upgrade`, `ssam-customize`):
+MCP server is **not required** — Node.js file operations only. Never block on server status for these.
+
+| Task | Tool |
+|---|---|
+| Scaffold / create project | `mcp__mdk__mdk-create` |
+| Generate pages, actions, rules | `mcp__mdk__mdk-gen` |
+| Validate, build, deploy, QR code | `mcp__mdk__mdk-manage` |
+| Look up schemas and docs | `mcp__mdk__mdk-docs` |
+| Fetch Mobile Services metadata | `mcp__mdk__mdk-fetch-mobile-metadata` |
+| Discover Mobile Services apps/destinations | `mcp__intent2app__mdk_mobile_services` *(only in Intent2App)* |
 
 ---
 
@@ -115,7 +115,7 @@ Do NOT fall back to file-system tools for MDK/SSAM questions — surface the err
 | MDK anti-patterns, code review checklist | `mdk-best-practices` skill |
 | MDK schema version upgrade (24.7 → 26.6) | `mdk-migration` skill |
 | CF login, region setup, Mobile Services configuration | `mdk-cf-mobile-services` skill |
-| SSAM project conventions, CIM file, ZEquinorSSAM folder | `mdk-ssam-patterns` skill |
+| SSAM project conventions, CIM file, custom Z project folder | `mdk-ssam-patterns` skill |
 | SSAM version upgrade, Metadata Upgrade Tool, merge conflicts | `mdk-ssam-upgrade` skill |
 | SSAM Upgrade or Customize interactive workflow (from /intent) | `mdk-ssam-workflow` skill — SSAM project structure templates, CIM creation, Z project scaffolding, override patterns, Z naming, validation checklist |
 | CAP backend + MDK mobile frontend full-stack | `mdk-cap-integration` skill |
@@ -138,7 +138,7 @@ Do NOT fall back to file-system tools for MDK/SSAM questions — surface the err
 - **No `existing_destinations_policy: fail`** — breaks every redeploy; use `update`.
 - **No hardcoded strings in MDK metadata** — all user-visible strings use `{i18n>Key}`.
 - **No manual `.service.metadata` generation** — use `mdk_mobile_services` (fetch-metadata) or VS Code MDK extension.
-- **No files written to `SAPAssetManager/`** (SSAM projects) — read-only reference only; implement in `ZEquinorSSAM/`.
+- **No files written to `SAPAssetManager/`** (SSAM projects) — read-only reference only; implement in `<CUSTOM_DIR>/` (Z project, name derived from CIM).
 
 ---
 

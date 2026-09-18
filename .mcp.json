@@ -1,15 +1,21 @@
 {
   "mcpServers": {
     "Intent2App": {
-      "type": "http",
-      "url": "http://localhost:3999/mcp",
-      "description": "Intent2App local MCP server — CAP, Fiori, UI5, MDK local tools"
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "mcp-server/start.js"
+      ],
+      "description": "Intent2App local MCP server \u2014 CAP, Fiori, UI5, MDK tools (auto-started by Claude Code)"
     },
     "mdk": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@sap/mdk-mcp-server"],
-      "description": "Official SAP MDK MCP server — mdk-create, mdk-gen, mdk-manage, mdk-docs, mdk-fetch-mobile-metadata"
+      "args": [
+        "-y",
+        "@sap/mdk-mcp-server"
+      ],
+      "description": "Official SAP MDK MCP server \u2014 mdk-create, mdk-gen, mdk-manage, mdk-docs, mdk-fetch-mobile-metadata"
     }
   }
 }

@@ -92,5 +92,5 @@ ls <projectDir> | grep -i "SAPAssetManager\|ZEquinor\|SSAM"
 
 Apply rules from project `CLAUDE.md` immediately. If no `CLAUDE.md`:
 - Protected: `SAPAssetManager/` — never modify or generate files here
-- Implementation: `ZEquinorSSAM/` — all new code goes here
-- CIM: `ZEquinorSSAM.CIM` — add entry for every new rule created
+- Implementation: `<CUSTOM_DIR>/` (name from CIM) — all new code goes here
+- CIM: `<CUSTOM_DIR>.cim` (in SAPAssetManager/) — add entry for every new rule
