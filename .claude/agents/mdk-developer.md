@@ -45,7 +45,7 @@ Run this step before any intent-specific work.
 
 **For `ssam-upgrade` or `ssam-customize`:**
 Skip ALL of Step 0 entirely — no project path scan, no CLAUDE.md check, no folder inspection.
-Go directly to intent routing. The `mdk-ssam-upgrade` / `mdk-ssam-patterns` skill
+Go directly to intent routing. The `mdk-ssam-upgrade` / `mdk-ssam-guide` skill
 handles all workspace detection internally via BLOCKING.
 
 **For `create-project`:**
@@ -106,7 +106,7 @@ Skip the project path scan. Proceed directly to intent routing.
 
 ### `create-project`
 
-This intent owns the full new-project questionnaire. Load the `mdk-patterns` skill first, then
+This intent owns the full new-project questionnaire. Load the `mdk-app-builder` skill first, then
 follow the 6-phase workflow. Collect information via BLOCKING messages in this order — stop at
 the first missing piece and return a BLOCKING to the main thread, which will re-spawn you with
 the answer appended to the brief.
@@ -194,7 +194,7 @@ Parse the output and present: ✓ passes / ✗ errors / ⚠ warnings, with exact
 
 ### `ssam-customize`
 
-Load `mdk-ssam-patterns` skill and `mdk-ssam-workflow` skill immediately.
+Load `mdk-ssam-guide`, `mdk-quality-checklist` skills immediately. If the customization involves writing or modifying a `.js` rule file, also load `mdk-rules-reference` skill for clientAPI reference. Apply best practices checklist to every file created or modified.
 
 **Phase 1 — Detect workspace (one silent Node.js script):**
 
@@ -301,7 +301,7 @@ BLOCKING: What would you like to customize or add?
 
 **Phase 4 — Implement the customization:**
 
-Follow `mdk-ssam-patterns` skill exactly:
+Follow `mdk-ssam-guide` skill exactly:
 
 1. Read the relevant file from `SAPAssetManager/` for reference — use `Read` tool
 2. Create the override in `<customDir>/` mirroring the SAP folder structure
@@ -328,7 +328,7 @@ Report: Z project created/updated, files created, CIM entries added, validation 
 
 ### `ssam-upgrade`
 
-Load `mdk-ssam-upgrade` skill and `mdk-ssam-workflow` skill. Follow the skill phases exactly.
+Load `mdk-ssam-upgrade` skill and `mdk-ssam-guide` skill. Follow the skill phases exactly.
 
 **Execution rules — no bash, no improvised commands:**
 - Each phase = save the script from the skill → run as `node /tmp/script.js <args>` → read output
@@ -341,14 +341,16 @@ Load `mdk-ssam-upgrade` skill and `mdk-ssam-workflow` skill. Follow the skill ph
 **Phase 3** — save to `/tmp/ssam_cim_audit.js`, run:
 `node /tmp/ssam_cim_audit.js "<cimFile>" "<customDir>"`
 
-**Phase 5** — save to `/tmp/ssam_upgrade.js`, run:
+**Phase 4** — save to `/tmp/ssam_upgrade.js`, run:
 `node /tmp/ssam_upgrade.js "<cimFile>" "<customDir>" "<sapDir>" "<newSapZip>" "<projectDir>"`
+
+For any conflicts — surface in plain English (see skill for exact wording). No tool references.
 
 Do not deviate. Surface all BLOCKING messages to the developer.
 
 ### `ssam-customize`
 
-Load `mdk-ssam-patterns` skill and `mdk-ssam-workflow` skill immediately.
+Load `mdk-ssam-guide`, `mdk-quality-checklist` skills immediately. If the customization involves writing or modifying a `.js` rule file, also load `mdk-rules-reference` skill for clientAPI reference. Apply best practices checklist to every file created or modified.
 
 **Phase 1 — Detect workspace (one silent Node.js script):**
 
@@ -455,7 +457,7 @@ BLOCKING: What would you like to customize or add?
 
 **Phase 4 — Implement the customization:**
 
-Follow `mdk-ssam-patterns` skill exactly:
+Follow `mdk-ssam-guide` skill exactly:
 
 1. Read the relevant file from `SAPAssetManager/` for reference — use `Read` tool
 2. Create the override in `<customDir>/` mirroring the SAP folder structure
@@ -482,8 +484,10 @@ Report: Z project created/updated, files created, CIM entries added, validation 
 
 ### `ssam-upgrade`
 
-Load `mdk-ssam-upgrade` skill (upgrade phases) and `mdk-ssam-workflow` skill
+Load `mdk-ssam-upgrade` skill (upgrade phases) and `mdk-ssam-guide` skill
 (Z project structure, CIM format, override patterns). Follow `mdk-ssam-upgrade` exactly.
+
+**Always load `mdk-quality-checklist` skill** for any create, modify, generate, or enhance task. Apply its checklist to every file before completing the task.
 
 **Tool preference:** Use `mcp__mdk__*` (SAP server) first for create/gen/manage/docs. Use `mcp__intent2app__mdk_mobile_services` for Mobile Services discovery — it is not in the SAP server. Use `mcp__intent2app__mdk_*` as offline fallback only if SAP server is unreachable.
 
@@ -498,7 +502,7 @@ Load `mdk-ssam-upgrade` skill (upgrade phases) and `mdk-ssam-workflow` skill
 - `mdk-ssam-upgrade` Phase 1: detect `SAPAssetManager/` and CIM, derive custom project
   name from CIM `path` entries — never hardcoded
 - If custom folder not found: offer user two options (provide path OR create new Z project)
-- If "create" chosen: use `mdk-ssam-workflow` Z project template to scaffold full folder
+- If "create" chosen: use `mdk-ssam-guide` Z project template to scaffold full folder
   structure mirroring `SAPAssetManager/` (Pages/, Rules/, Actions/, i18n/, and all subfolders)
 - Phase 3: CIM pre-audit using detected paths
 - Phase 5 Step 3b: add CIM `IntegrationPoints` entries for every upgraded file
@@ -526,16 +530,16 @@ Call `mcp__mdk__mdk-manage` with `operation: "migrate"`. Report schema version b
 
 ## MDK creation workflow
 
-For every new project, follow the 6-phase workflow defined in the `mdk-patterns` skill:
+For every new project, follow the 6-phase workflow defined in the `mdk-app-builder` skill:
 Phase 1 Env Setup → Phase 2 Project Creation → Phase 3 Service Config →
 Phase 4 UI Development → Phase 5 Rules & Logic → Phase 6 Build & Deploy.
 
-Load `mdk-patterns` skill at the start of any `create-project` intent to surface the full
+Load `mdk-app-builder` skill at the start of any `create-project` intent to surface the full
 workflow, hard rules, and phase → MCP tool map before writing a single file.
 
 ## MDK patterns quick-reference
 
-Load `mdk-patterns` skill for: page schemas, action types, binding syntax, offline patterns.
+Load `mdk-app-builder` skill for: page schemas, action types, binding syntax, offline patterns.
 
 Key rules:
 - All pages live in `Pages/` (subdirs allowed), all actions in `Actions/`, rules in `Rules/`.

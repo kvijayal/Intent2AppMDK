@@ -50,8 +50,21 @@ Do NOT check CF login here — only when a CF-dependent intent is identified in 
 
 **2a. If entering from a new MDK selection (no existing project):**
 
-If `$ARGUMENTS` already contains a specific MDK requirement, use it directly without asking.
-Otherwise use ONE `AskUserQuestion` with all options combined:
+If `$ARGUMENTS` already contains a specific MDK requirement (and it is NOT an SSAM keyword — see STEP 3), use it directly without asking and proceed to STEP 3.
+
+Otherwise use ONE `AskUserQuestion` to choose the MDK mode:
+
+```
+Q: "What would you like to build or do?"
+Options:
+  - "Standard MDK App"             → proceed to STEP 2b
+  - "Upgrade SAP Asset Manager"    → set intent=ssam-upgrade, jump to STEP 3
+  - "Customize SAP Asset Manager"  → load the /intent-ssam skill and execute it; do not continue in this file
+```
+
+**2b. Standard MDK App — sub-options:**
+
+Ask ONE more `AskUserQuestion`:
 
 ```
 Q: "What would you like to do?"
@@ -62,7 +75,7 @@ Options:
   - "Validate / build my MDK project"
 ```
 
-If user selects one of the other options → proceed to STEP 3 to identify intent.
+Proceed to STEP 3 to identify intent from the selection.
 
 **2c. If entering from an existing project detection (STEP 0-A):**
 

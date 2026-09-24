@@ -92,8 +92,12 @@ async function generateTemplateBasedMetadata(
     else yoCommand = "yo"; // system PATH fallback
   }
 
-  let script = `${yoCommand} ${mdkGeneratorPath}/generators/app/index.js --dataFile ${configPath} --force`;
-  if (mdkBinary) script += ` --tool ${mdkBinary}`;
+  // Quote paths for Windows compatibility
+  const isWin = process.platform === "win32";
+  const genPath = isWin ? `"${mdkGeneratorPath}/generators/app/index.js"` : `${mdkGeneratorPath}/generators/app/index.js`;
+  const dataPath = isWin ? `"${configPath}"` : configPath;
+  let script = `"${yoCommand}" "${genPath}" --dataFile "${dataPath}" --force`;
+  if (mdkBinary) script += ` --tool "${mdkBinary}"`;
   return script;
 }
 

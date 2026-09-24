@@ -104,22 +104,22 @@ MCP server is **not required** — Node.js file operations only. Never block on 
 | Testing (Jest, OPA5, QUnit) | `sap-unit-testing` skill |
 | i18n completeness | `i18n-completeness` skill |
 | Code quality / security review | `review-quality-checks` skill |
-| New MDK project (any type) | `mdk-patterns` skill — 6-phase workflow (env → scaffold → service → UI → rules → deploy) |
-| MDK page / action / rule schemas | `mdk-patterns` skill — Phase 4 & 5 patterns |
-| MDK build & deploy to Mobile Services | `mdk-patterns` skill — Phase 6 |
+| New MDK project (any type) | `mdk-app-builder` skill — 6-phase workflow (env → scaffold → service → UI → rules → deploy) |
+| MDK page / action / rule schemas | `mdk-app-builder` skill — Phase 4 & 5 patterns |
+| MDK build & deploy to Mobile Services | `mdk-app-builder` skill — Phase 6 |
 | Read existing MDK project context | `mdk-project-setup` skill — reads `.project.json` + `.service.metadata` directly |
 | Check / fix MDK bundler externals | `mdk-bundler-settings` skill — reads/writes `.vscode/settings.json` directly |
-| MDK offline sync conflict resolution | `mdk-offline-resilience` skill |
-| MDK app versioning, OnWillUpdate, OnDidUpdate | `mdk-app-update` skill |
-| MDK rules, clientAPI, NativeScript APIs | `mdk-rules-library` skill |
-| MDK anti-patterns, code review checklist | `mdk-best-practices` skill |
-| MDK schema version upgrade (24.7 → 26.6) | `mdk-migration` skill |
-| CF login, region setup, Mobile Services configuration | `mdk-cf-mobile-services` skill |
-| SSAM project conventions, CIM file, custom Z project folder | `mdk-ssam-patterns` skill |
+| MDK offline sync conflict resolution | `mdk-offline-reliability` skill |
+| MDK app versioning, OnWillUpdate, OnDidUpdate | `mdk-deployment-guide` skill |
+| MDK rules, clientAPI, NativeScript APIs | `mdk-rules-reference` skill |
+| MDK quality rules, code review checklist | `mdk-quality-checklist` skill — loaded automatically on every create/modify/upgrade task |
+| MDK schema version upgrade (24.7 → 26.6) | `mdk-version-upgrade` skill |
+| CF login, region setup, Mobile Services configuration | `mdk-deployment-guide` skill |
+| SSAM project conventions, CIM file, custom Z project folder | `mdk-ssam-guide` skill |
 | SSAM version upgrade, Metadata Upgrade Tool, merge conflicts | `mdk-ssam-upgrade` skill |
-| SSAM Upgrade or Customize interactive workflow (from /intent) | `mdk-ssam-workflow` skill — SSAM project structure templates, CIM creation, Z project scaffolding, override patterns, Z naming, validation checklist |
-| CAP backend + MDK mobile frontend full-stack | `mdk-cap-integration` skill |
-| Multi-environment deploy, device onboarding, QR code, CI/CD | `mdk-environment-deploy` skill |
+| SSAM Upgrade or Customize interactive workflow (from /intent) | `mdk-ssam-guide` skill — SSAM project structure templates, CIM creation, Z project scaffolding, override patterns, Z naming, validation checklist |
+| CAP backend + MDK mobile frontend full-stack | `mdk-app-builder` skill |
+| Multi-environment deploy, device onboarding, QR code, CI/CD | `mdk-deployment-guide` skill |
 
 ---
 

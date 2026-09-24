@@ -437,7 +437,7 @@ Route the answer back to STEP 3 → STEP 4 → STEP 5, or exit if "Done".
 
 **Do not run CAP/Fiori steps or Standalone MDK steps for SAP Asset Manager. Use only this section.**
 
-**Load `Skill(mdk-ssam-workflow)` now** — it contains SSAM project structure templates, CIM file patterns, override patterns, and Z naming conventions.
+**Load `Skill(mdk-ssam-guide)` now** — it contains SSAM project structure templates, CIM file patterns, override patterns, and Z naming conventions.
 
 **Non-negotiable rules — never break these:**
 - `SAPAssetManager/` (the SAP standard project) is **read-only** — never generate or modify files inside it.
@@ -475,7 +475,7 @@ requirement:  <user's original requirement text>
 projectDir:   <current working directory as absolute path>
 ```
 
-The agent loads `mdk-ssam-upgrade` skill and `mdk-ssam-workflow` skill.
+The agent loads `mdk-ssam-upgrade` skill and `mdk-ssam-guide` skill.
 The skill handles everything: workspace detection, path collection via BLOCKING,
 CIM pre-audit, Metadata Upgrade Tool guidance, 3-way merge, and post-upgrade validation.
 
@@ -493,5 +493,5 @@ requirement: <user's original requirement>
 projectDir:  <current working directory>
 ```
 
-The agent loads `mdk-ssam-patterns` and `mdk-ssam-workflow` skills.
+The agent loads `mdk-ssam-guide` and `mdk-ssam-guide` skills.
 All workspace detection and CIM handling is done inside the skills via BLOCKING.

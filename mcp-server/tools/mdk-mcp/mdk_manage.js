@@ -37,7 +37,7 @@ export default {
       switch (operation) {
         case "build": {
           if (!mdkBinary) return { content: [{ type: "text", text: "Error: MDK tools not found. Please ensure @sap/mdk-tools is installed: npm install -g @sap/mdk-tools" }] };
-          const buildScript = `${mdkBinary} build --target zip --project "${folderRootPath}"`;
+          const buildScript = `"${mdkBinary}" build --target zip --project "${folderRootPath}"`;
           const buildResult = runCommand(buildScript);
           return { content: [{ type: "text", text: `MDK Build completed successfully.\n\n${buildResult}` }] };
         }
@@ -90,7 +90,7 @@ export default {
 
           const externalsString = resolvedExternals.length > 0 ? `--externals "${resolvedExternals.join(",")}"` : "";
           const deployParts = [
-            `${mdkBinary} deploy`,
+            `"${mdkBinary}" deploy`,
             `--target mobile`,
             `--name ${mobileServiceAppName}`,
             `--showqr`,
@@ -110,7 +110,7 @@ export default {
 
         case "validate": {
           if (mdkBinary) {
-            const validationCommand = `${mdkBinary} validate --project "${folderRootPath}"`;
+            const validationCommand = `"${mdkBinary}" validate --project "${folderRootPath}"`;
             return {
               content: [{
                 type: "text",
@@ -123,7 +123,7 @@ export default {
 
         case "migrate": {
           if (!mdkBinary) return { content: [{ type: "text", text: "Error: MDK tools not found. Please ensure @sap/mdk-tools is installed." }] };
-          const migrationScript = `${mdkBinary} migrate --project "${folderRootPath}"`;
+          const migrationScript = `"${mdkBinary}" migrate --project "${folderRootPath}"`;
           const migrateResult = runCommand(migrationScript);
           return { content: [{ type: "text", text: `MDK Migration completed successfully.\n\n${migrateResult}` }] };
         }

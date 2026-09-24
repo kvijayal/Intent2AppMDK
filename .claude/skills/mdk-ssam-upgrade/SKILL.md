@@ -3,18 +3,16 @@ name: mdk-ssam-upgrade
 version: 0.5.0
 description: >
   Use when upgrading SAP Service and Asset Manager (SSAM) to a new version using the
-  SAP Metadata Upgrade Tool. Covers workspace detection, custom project detection from
-  CIM file, CIM pre-audit, Metadata Upgrade Tool workflow, conflict resolution, and
-  post-upgrade CIM verification. This skill is fully executable — follow each phase in
-  order. Trigger on: "SSAM upgrade", "SAP Asset Manager upgrade", "upgrade SSAM",
-  "Metadata Upgrade Tool", "SSAM metadata merge", "upgrade to new version SSAM",
+  Automated SSAM upgrade — workspace detection, CIM pre-audit, file upgrade with
+  conflict handling in plain English, output ZIP production. Fully executable — follow
+  each phase in order. Trigger on: "SSAM upgrade", "SAP Asset Manager upgrade", "upgrade SSAM",
   "SSAM 2305", "SSAM 2210", "SAPAssetManager upgrade", "merge custom metadata",
   "upgrade metadata ZIP", "3-way merge MDK", "new SAPAssetManager version",
   "SSAM customisation upgrade", "merge SSAM customisations".
 source: SAP Service and Asset Manager Upgrade Guide 2305
 ---
 
-# SSAM Upgrade — Metadata Upgrade Tool Workflow
+# SSAM Upgrade Workflow
 
 ## What this skill does
 
@@ -29,7 +27,7 @@ Guides the complete SSAM metadata upgrade
 - **Show the user only:** phase completion lines, BLOCKING questions, and final results
 - The user wants the upgrade done — not a tour of their folder structure
 
- using the SAP Metadata Upgrade Tool.
+ automatically using Node.js — no external tools required.
 The tool merges your customised metadata with the new SAP out-of-box release.
 
 **Developer provides:** Only the new `SAPAssetManager` ZIP (latest SAP release).
@@ -105,6 +103,12 @@ Bash: node /tmp/ssam_detect.js "<projectDir>"
 ```
 
 **Do NOT run any other commands before or after this. Read the output and act on it.**
+
+**After Phase 5 script runs:**
+- Lines starting with `CATEGORY_E:` → surface each one as AskUserQuestion with three options:
+  Drop as obsolete / Re-home the customization / Keep as standalone
+- Lines starting with `category_b` / `category_c` → log silently, no user action needed
+- Report summary: `X upgraded (Category C), Y taken from SAP (Category B), Z Category E decisions`
 
 // Step 1 — SAPAssetManager must be a direct subfolder of projectDir
 const sapDir = path.join(projectDir, "SAPAssetManager");
@@ -241,137 +245,13 @@ console.log("missing="     + JSON.stringify(missing));
 **Note:** Files in `<customDir>` that have NO CIM entry are standalone additions
 (new features, helpers, utilities). They are not touched during the upgrade.
 
-## Phase 4 — Metadata Upgrade Tool workflow
-
-```
-Tool: SAP Service and Asset Manager Metadata Upgrade Tool
-Type: Cross-platform Electron app (macOS / Windows)
-Download: https://help.sap.com/docs/SAP_SERVICE_ASSET_MANAGER
-          (requires TEA — Test and Evaluation Agreement)
+h should be used?
+   → Use the new SSAM version (recommended if you are not sure)
+   → Keep my custom version
+   → Keep both — add my custom lines after the new SSAM version"
 ```
 
-**Step 1 — Prepare the customised ZIP:**
-
-The tool requires two ZIPs. You already have the new version ZIP.
-Now create the customised ZIP from your workspace:
-
-```javascript
-// Create customised ZIP using Node.js — no bash zip command needed
-const fs       = require("fs");
-const path     = require("path");
-const archiver = require("archiver"); // bundled with Claude Code environment
-
-const sapDir    = String.raw`<sap_dir>`;
-const customDir = String.raw`<custom_dir>`;
-const outZip    = path.join(require("os").tmpdir(), "customised_ssam.zip");
-
-const output  = fs.createWriteStream(outZip);
-const archive = archiver("zip", { zlib: { level: 6 } });
-archive.pipe(output);
-archive.directory(sapDir,    "SAPAssetManager");
-archive.directory(customDir, path.basename(customDir));
-archive.finalize();
-output.on("close", () => console.log("Created: " + outZip + " (" + archive.pointer() + " bytes)"));
-```
-
-This ZIP contains your current SAPAssetManager (baseline) and custom project.
-
-**Step 1b — Upload both ZIPs:**
-```
-Launch the Metadata Upgrade Tool (Electron app)
-→ click Upload
-
-  Customised metadata ZIP: /tmp/customised_ssam.zip
-    (your current SAPAssetManager + <CUSTOM_DIR> combined)
-
-  New version ZIP: <NEW_SAP_ZIP>
-    (the new SAP release downloaded from SAP Help Portal)
-
-→ click Upload to start processing
-```
-
-**Step 2 — Review file tree:**
-Files organised by type: Page / Rule / Action / Properties/i18n
-
-**Step 3 — Auto-merge non-customised files:**
-Click the blue Merge icon for files that exist only in SAP standard (no custom changes).
-
-**Step 4 — Manual merge for custom project files:**
-For every file under `<CUSTOM_DIR>/`:
-- Open in Merge Editor
-- Use **"Prioritize custom, integrate new"** strategy
-- Your custom code preserved for conflicting properties
-- New SAP properties added automatically
-
-**Step 5 — CIM file — auto-merged by the skill (not manual):**
-
-After the tool exports the upgraded ZIP, the skill merges the CIM automatically:
-
-```javascript
-// Auto-merge CIM: keep custom entries, take SAP standard entries from new version
-const fs   = require("fs");
-const path = require("path");
-
-const cimFile    = String.raw`<cim_file>`;
-const newCimFile = path.join(require("os").tmpdir(), "new_ssam", "SAPAssetManager",
-                             path.basename(cimFile));
-
-const current = JSON.parse(fs.readFileSync(cimFile, "utf8"));
-const newVer  = fs.existsSync(newCimFile)
-              ? JSON.parse(fs.readFileSync(newCimFile, "utf8")) : { IntegrationPoints: [] };
-
-const customEntries = (current.IntegrationPoints || [])
-  .filter(ip => !ip.Source.includes("SAPAssetManager"));
-const sapEntries = (newVer.IntegrationPoints || [])
-  .filter(ip => ip.Source.includes("SAPAssetManager"));
-
-current.IntegrationPoints = [...customEntries, ...sapEntries];
-fs.writeFileSync(cimFile, JSON.stringify(current, null, 4));
-console.log("CIM merged: " + customEntries.length + " custom + " + sapEntries.length + " SAP entries");
-```
-
-**What the auto-merge does:**
-- Custom rules (`path` contains `<CUSTOM_NAME>`) → always preserved
-- SAP standard rules → taken from new version (picks up new SAP entries automatically)
-- New rules added in new SAP version → added automatically
-- Rules removed from new SAP version → dropped automatically
-
-**Step 6 — Batch auto-merge remaining:**
-```
-Home Page → AUTO MERGE
-→ Download the Batch Merge Results report
-→ Review: Changed / Processed / Unchanged / Removed counts
-```
-
-**Step 7 — Export:**
-Download the upgraded metadata ZIP from the tool.
-
----
-
-## Conflict resolution strategies
-
-| Strategy | Use when |
-|---|---|
-| Keep custom | Custom logic must be preserved entirely, no new SAP features needed |
-| Replace with new | File has no real customisations |
-| **Prioritize custom + integrate new** *(recommended)* | Most files — keeps your changes, adds SAP new properties |
-
-**Example conflict (Page file — OnPress of a button):**
-```json
-// Both custom and new SAP modify OnPress:
-"custom": { "OnPress": "/<CUSTOM_DIR>/Rules/MyRule.js" }
-"new SAP": { "OnPress": "/SAPAssetManager/Rules/NewRule.js", "Caption": "$(L,done)" }
-
-// "Prioritize custom + integrate new" result:
-"resolved": {
-  "OnPress": "/<CUSTOM_DIR>/Rules/MyRule.js",   ← your rule preserved
-  "Caption": "$(L,done)"                          ← new SAP property added
-}
-```
-
----
-
-## Phase 5 — Upgrade custom files and produce output ZIP
+## Phase 4 — Upgrade custom files and produce output ZIP
 
 **The existing workspace is never modified — read from workspace, write directly into ZIP.**
 
@@ -449,9 +329,10 @@ function upgradeFile(r) {
   const newSap    = fs.readFileSync(r.newSapFile,  "utf8");
   const zipPath   = customName + "/" + r.source.replace(/^\/[^/]+\//, "");
 
+  // Category B: no custom changes — take new SAP directly
   if (oldSap === customSrc) {
     addToZip(zipPath, recalcImports(newSap, zipPath, sapDir));
-    return "no_custom_changes";
+    return "category_b";
   }
 
   const oldSet = new Set(oldSap.split("\n").map(l=>l.trim()).filter(Boolean));
@@ -463,7 +344,9 @@ function upgradeFile(r) {
 
   const merged = [...newLines, ...(unique.length ? ["","// --- Custom additions ---",...unique] : [])];
   addToZip(zipPath, recalcImports(merged.join("\n"), zipPath, sapDir));
-  return "upgraded";
+  // Category C: clean merge — custom additions appended to new SAP base
+  // If same lines changed in both — ask user in plain English which version to keep
+  return "category_c";
 }
 
 const results = { upgraded:[], no_change:[], failed:[] };
@@ -570,7 +453,7 @@ console.log("  SAPAssetManager/  — CIM with upgraded Target paths");
 console.log("\nNext: extract alongside new SAPAssetManager → validate → deploy DEV");
 ```
 
-## Phase 6 — Post-upgrade checklist
+## Phase 5 — Post-upgrade checklist
 
 **The upgraded ZIP has been delivered. Existing custom project is completely untouched.**
 
@@ -592,14 +475,14 @@ console.log("\nNext: extract alongside new SAPAssetManager → validate → depl
 - [ ] Open VS Code with: new `SAPAssetManager/` + extracted `<CUSTOM_NAME>/` in same workspace
 - [ ] Run `mdk_manage validate` → must be 0 errors
 - [ ] Bump `ApplicationVersion` in `.project.json` (MAJOR if schema changed)
-- [ ] Offline app: implement `OnWillUpdate` + `OnDidUpdate` — see `mdk-app-update` skill
-- [ ] Deploy DEV → test → QA → PROD — see `mdk-environment-deploy` skill
+- [ ] Offline app: implement `OnWillUpdate` + `OnDidUpdate` — see `mdk-deployment-guide` skill
+- [ ] Deploy DEV → test → QA → PROD — see `mdk-deployment-guide` skill
 
 **Old project** at `<customDir>` is safe to compare against or roll back to at any time.
 
 ---
 
 ## Related skills
-- `mdk-ssam-patterns` — day-to-day SSAM conventions, CIM entries for new rules
-- `mdk-app-update` — OnWillUpdate/OnDidUpdate for schema-breaking upgrades
-- `mdk-environment-deploy` — deploy upgraded app to dev/QA/prod
+- `mdk-ssam-guide` — day-to-day SSAM conventions, CIM entries for new rules
+- `mdk-deployment-guide` — OnWillUpdate/OnDidUpdate for schema-breaking upgrades
+- `mdk-deployment-guide` — deploy upgraded app to dev/QA/prod

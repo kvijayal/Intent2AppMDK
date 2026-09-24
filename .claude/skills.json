@@ -61,36 +61,6 @@
       "sourceType": "local",
       "skillPath": "skills/procode-extensibility/SKILL.md"
     },
-    "mdk-patterns": {
-      "source": "local",
-      "sourceType": "local",
-      "skillPath": "skills/mdk-patterns/SKILL.md"
-    },
-    "mdk-rules-library": {
-      "source": "local",
-      "sourceType": "local",
-      "skillPath": "skills/mdk-rules-library/SKILL.md"
-    },
-    "mdk-best-practices": {
-      "source": "local",
-      "sourceType": "local",
-      "skillPath": "skills/mdk-best-practices/SKILL.md"
-    },
-    "mdk-migration": {
-      "source": "local",
-      "sourceType": "local",
-      "skillPath": "skills/mdk-migration/SKILL.md"
-    },
-    "mdk-offline-resilience": {
-      "source": "local",
-      "sourceType": "local",
-      "skillPath": "skills/mdk-offline-resilience/SKILL.md"
-    },
-    "mdk-app-update": {
-      "source": "local",
-      "sourceType": "local",
-      "skillPath": "skills/mdk-app-update/SKILL.md"
-    },
     "cap-developer": {
       "source": "capire/skills",
       "sourceType": "github",
@@ -132,35 +102,45 @@
       "sourceType": "local",
       "skillPath": "skills/review-quality-checks/SKILL.md"
     },
-    "mdk-cf-mobile-services": {
-      "source": "local",
-      "sourceType": "local",
-      "skillPath": "skills/mdk-cf-mobile-services/SKILL.md"
-    },
-    "mdk-ssam-patterns": {
-      "source": "local",
-      "sourceType": "local",
-      "skillPath": "skills/mdk-ssam-patterns/SKILL.md"
-    },
-    "mdk-cap-integration": {
-      "source": "local",
-      "sourceType": "local",
-      "skillPath": "skills/mdk-cap-integration/SKILL.md"
-    },
-    "mdk-environment-deploy": {
-      "source": "local",
-      "sourceType": "local",
-      "skillPath": "skills/mdk-environment-deploy/SKILL.md"
-    },
     "mdk-ssam-upgrade": {
       "source": "local",
       "sourceType": "local",
       "skillPath": "skills/mdk-ssam-upgrade/SKILL.md"
     },
-    "mdk-ssam-workflow": {
+    "mdk-app-builder": {
       "source": "local",
       "sourceType": "local",
-      "skillPath": "skills/mdk-ssam-workflow/SKILL.md"
+      "skillPath": "skills/mdk-app-builder/SKILL.md"
+    },
+    "mdk-rules-reference": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/mdk-rules-reference/SKILL.md"
+    },
+    "mdk-quality-checklist": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/mdk-quality-checklist/SKILL.md"
+    },
+    "mdk-version-upgrade": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/mdk-version-upgrade/SKILL.md"
+    },
+    "mdk-offline-reliability": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/mdk-offline-reliability/SKILL.md"
+    },
+    "mdk-deployment-guidement-guide": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/mdk-deployment-guidement-guide/SKILL.md"
+    },
+    "mdk-ssam-guide": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/mdk-ssam-guide/SKILL.md"
     }
   }
 }
