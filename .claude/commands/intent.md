@@ -50,9 +50,15 @@ If MDK is in scope, print this reminder (do not block):
 
 **STEP 0-A — Detect workspace and developer type.**
 
-**First — silently scan the workspace using Node.js (no bash permission popups):**
+**First — silently scan the workspace using Node.js:**
+
+Save this script to `C:\Temp\intent_scan.js` (Windows) or `/tmp/intent_scan.js` (Mac/Linux) and run:
+```
+Bash: node C:\Temp\intent_scan.js
+```
 
 ```javascript
+// intent_scan.js
 const fs = require("fs"), path = require("path");
 const cwd = process.cwd();
 const find = (name, maxDepth=4) => {

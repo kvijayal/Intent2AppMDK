@@ -339,25 +339,48 @@ Report: Z project created/updated, files created, CIM entries added, validation 
 
 ### `ssam-upgrade`
 
-Load `mdk-ssam-upgrade` skill and `mdk-ssam-guide` skill. Follow the skill phases exactly.
+Load `mdk-ssam-upgrade` skill, `mdk-ssam-guide` skill, and `mdk-quality-checklist` skill. **Execute ONLY the exact steps below — nothing else.**
 
-**Execution rules — no bash, no improvised commands:**
-- Each phase = save the script from the skill → run as `node /tmp/script.js <args>` → read output
-- **Never** use `find`, `ls`, `dir`, `cat`, `grep`, `git` — all operations via Node.js
-- BLOCKING for every missing input — never guess paths
+---
 
-**Phase 1** — save to `/tmp/ssam_detect.js`, run:
-`node /tmp/ssam_detect.js "<projectDir>"`
+**STEP 1 — Write this script to disk and run it. Nothing else.**
 
-**Phase 3** — save to `/tmp/ssam_cim_audit.js`, run:
-`node /tmp/ssam_cim_audit.js "<cimFile>" "<customDir>"`
+Write the Phase 1 script from `mdk-ssam-upgrade` skill to `C:\Temp\ssam_detect.js` (Windows) or `/tmp/ssam_detect.js` (Mac/Linux).
+Run: `node <path>/ssam_detect.js "<projectDir>"`
+Read the output. If any value is NOT_FOUND → BLOCKING question to developer. Do not continue until all values are found.
 
-**Phase 4** — save to `/tmp/ssam_upgrade.js`, run:
-`node /tmp/ssam_upgrade.js "<cimFile>" "<customDir>" "<sapDir>" "<newSapZip>" "<projectDir>"`
+**STEP 2 — BLOCKING: Ask for new SAP ZIP path.**
 
-For any conflicts — surface in plain English (see skill for exact wording). No tool references.
+Show the developer what was detected (sap_dir, cim_file, custom_dir, version).
+Ask: "Provide the full path to the new SAPAssetManager ZIP file."
+Do not continue until the developer provides it.
 
-Do not deviate. Surface all BLOCKING messages to the developer.
+**STEP 3 — Write Phase 3 script to disk and run it. Nothing else.**
+
+Write the Phase 3 script from `mdk-ssam-upgrade` skill to `C:\Temp\ssam_cim_audit.js`.
+Run: `node <path>/ssam_cim_audit.js "<cimFile>" "<customDir>"`
+If any CIM entries are missing files → BLOCKING. Do not continue.
+
+**STEP 4 — Write Phase 4 script to disk and run it. Nothing else.**
+
+Write the Phase 4 script from `mdk-ssam-upgrade` skill to `C:\Temp\ssam_upgrade.js`.
+Run: `node <path>/ssam_upgrade.js "<cimFile>" "<customDir>" "<sapDir>" "<newSapZip>" "<projectDir>"`
+
+After the script completes → call `mcp__mdk__mdk-create` on the new Z project folder in outputDir.
+
+Report the output ZIP path to the developer.
+
+---
+
+**FORBIDDEN — these actions will corrupt the project:**
+- ❌ `Copy-Item`, `cp`, `xcopy`, `robocopy` — never copy existing project folders
+- ❌ Creating any backup folder (`SAPAssetManager_backup`, `_old`, `_bak` etc.)
+- ❌ Replacing or deleting `SAPAssetManager/` — it is READ ONLY source material
+- ❌ Any PowerShell commands (`Get-ChildItem`, `Get-Content`, `Test-Path`, `Write-Output`)
+- ❌ Any bash commands (`ls`, `find`, `cat`, `grep`, `dir`)
+- ❌ Reading files one by one — the Node.js scripts do all reading internally
+
+**The existing workspace must be 100% untouched. All output goes into a ZIP.**
 
 ### `ssam-customize`
 

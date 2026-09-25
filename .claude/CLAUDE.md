@@ -65,6 +65,26 @@ Use MCP tools. Prefer `mcp__mdk__*` (SAP server); use `mcp__intent2app__mdk_*` a
 **For SSAM upgrade/customize** (`ssam-upgrade`, `ssam-customize`):
 MCP server is **not required** — Node.js file operations only. Never block on server status for these.
 
+**SSAM upgrade FORBIDDEN actions — these will corrupt the project:**
+```
+❌ Copy-Item, cp, xcopy, robocopy    — never copy existing project folders
+❌ SAPAssetManager_backup, _old      — never create backup folders
+❌ Get-ChildItem, Get-Content         — no PowerShell file reading
+❌ Test-Path, Write-Output            — no PowerShell at all
+❌ ls, find, cat, grep, dir           — no bash file reading
+❌ Replacing or deleting SAPAssetManager/ — READ ONLY source
+```
+
+**SSAM upgrade ONLY allowed actions:**
+```
+✅ Write Node.js script to C:\Temp\ or /tmp/
+✅ node <script>.js "<args>"          — run the script once
+✅ mcp__mdk__mdk-create               — generate MDK project structure
+✅ BLOCKING question to developer     — when input is needed
+```
+
+All output goes into a ZIP. Existing workspace is always 100% untouched.
+
 | Task | Tool |
 |---|---|
 | Scaffold / create project | `mcp__mdk__mdk-create` |
