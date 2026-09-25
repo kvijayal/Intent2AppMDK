@@ -264,7 +264,7 @@ const AdmZip  = require("adm-zip");
 // Args passed by agent: node /tmp/ssam_upgrade.js "<cimFile>" "<customDir>" "<sapDir>" "<newSapZip>" "<projectDir>"
 const [,, cimFile, customDir, sapDir, newSapZip, projectDir] = process.argv;
 
-// ── Step 1: Extract new SAPAssetManager from ZIP to temp ──
+// ── Step 1: Extract new SAPAssetManager from ZIP to temp (read-only reference) ──
 // Save entire Phase 5 as /tmp/ssam_upgrade.js and run: node /tmp/ssam_upgrade.js
 const newSapDir = path.join(os.tmpdir(), "ssam_new_" + Date.now());
 fs.mkdirSync(newSapDir, { recursive: true });
@@ -272,7 +272,10 @@ const zipIn = new AdmZip(newSapZip);
 zipIn.getEntries()
   .filter(e => e.entryName.includes("SAPAssetManager"))
   .forEach(e => zipIn.extractEntryTo(e, newSapDir, true, true));
-console.log("New SAP extracted to: " + newSapDir);
+
+// Find extracted SAPAssetManager folder
+const newSapExtracted = path.join(newSapDir, "SAPAssetManager");
+console.log("New SAP extracted to: " + newSapExtracted);
 
 // ── Step 2: Identify CIM-registered files needing upgrade ──
 const cim = JSON.parse(fs.readFileSync(cimFile, "utf8"));
@@ -297,16 +300,19 @@ for (const ip of (cim.IntegrationPoints || [])) {
 }
 console.log("Needs upgrade: " + needsUpgrade.length + " | Unchanged: " + unchanged.length);
 
-// ── Step 3: Build the output ZIP directly — no intermediate folder copy ──
-const outZip = new AdmZip();
+// ── Step 3: Build upgraded files into outputDir ──
 const customName = path.basename(customDir);
 
-// Helper: add a file buffer to ZIP
-function addToZip(zipPath, content) {
-  outZip.addFile(zipPath, Buffer.from(content, "utf8"));
+// Helpers write upgraded files to outputDir — Step 4 packages them into ZIP
+function addToZip(zipPath, fileContent) {
+  const fullPath = path.join(outputDir, zipPath);
+  fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+  fs.writeFileSync(fullPath, fileContent);
 }
 function addFileToZip(zipPath, srcPath) {
-  outZip.addFile(zipPath, fs.readFileSync(srcPath));
+  const fullPath = path.join(outputDir, zipPath);
+  fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+  fs.copyFileSync(srcPath, fullPath);
 }
 
 // 3a: Upgrade CIM-registered files (new SAP base + custom logic)
@@ -408,6 +414,7 @@ if (fs.existsSync(newServicesDir)) {
 }
 
 // 3f: Upgrade CIM Target paths + merge SAP entries → add to ZIP
+// CIM always lives in SAPAssetManager/ root — never in the Z project
 let newCimFile = null;
 for (const dir of [path.join(newSapDir,"SAPAssetManager"), newSapDir]) {
   if (!fs.existsSync(dir)) continue;
@@ -417,10 +424,26 @@ for (const dir of [path.join(newSapDir,"SAPAssetManager"), newSapDir]) {
 }
 
 const targetMap = new Map();
+let newSchemaVersion = null;
+let newComponentVersion = null;
 if (newCimFile) {
   const newCim = JSON.parse(fs.readFileSync(newCimFile,"utf8"));
+  // Capture schema/component version from new SAP CIM
+  newSchemaVersion    = newCim.SchemaVersion    || newCim._SchemaVersion    || null;
+  newComponentVersion = newCim.ComponentVersion || newCim._ComponentVersion || null;
   for (const ip of (newCim.IntegrationPoints||[]))
     if (ip.Source && ip.Target) targetMap.set(path.basename(ip.Source), ip.Target);
+}
+
+// If CIM has no SchemaVersion, read from new SAPAssetManager Application.app
+if (!newSchemaVersion) {
+  const newAppFile = path.join(newSapDir, "SAPAssetManager", "Application.app");
+  if (fs.existsSync(newAppFile)) {
+    try {
+      const app = JSON.parse(fs.readFileSync(newAppFile,"utf8"));
+      newSchemaVersion = app._SchemaVersion || app.SchemaVersion || null;
+    } catch(_) {}
+  }
 }
 
 const customEntries = (cim.IntegrationPoints||[])
@@ -435,19 +458,44 @@ const sapEntries = newCimFile
       .filter(ip => ip.Source.includes("SAPAssetManager"))
   : (cim.IntegrationPoints||[]).filter(ip => ip.Source.includes("SAPAssetManager"));
 
+// Update CIM with new version info and merged entries
 cim.IntegrationPoints = [...customEntries, ...sapEntries];
-addToZip("SAPAssetManager/" + path.basename(cimFile), JSON.stringify(cim, null, 4));
-console.log("✅ CIM upgraded (" + customEntries.length + " custom, " + sapEntries.length + " SAP entries)");
+if (newSchemaVersion)    cim.SchemaVersion    = newSchemaVersion;
+if (newComponentVersion) cim.ComponentVersion = newComponentVersion;
+
+// Write upgraded CIM directly into the NEW SAPAssetManager folder on disk
+// The CIM belongs in the latest SAP version — not in the old project, not in the ZIP
+const newCimOutputPath = path.join(newSapExtracted, path.basename(cimFile));
+fs.writeFileSync(newCimOutputPath, JSON.stringify(cim, null, 4));
+console.log("✅ CIM upgraded and written to new SAPAssetManager:");
+console.log("   Location:  " + newCimOutputPath);
+console.log("   Schema:    " + (newSchemaVersion    || "unchanged"));
+console.log("   Version:   " + (newComponentVersion || "unchanged"));
+console.log("   Custom entries: " + customEntries.length + " (Target paths upgraded)");
+console.log("   SAP entries:    " + sapEntries.length);
 
 // ── Step 4: Write ZIP to disk ──
+// ZIP contains: new SAPAssetManager (latest version with upgraded CIM) + upgraded Z project
+const outZip = new AdmZip();
+
+// Add new SAPAssetManager (latest version) — CIM already written inside it
+outZip.addLocalFolder(newSapExtracted, "SAPAssetManager");
+console.log("  Added: SAPAssetManager/ (new version with upgraded CIM)");
+
+// Add upgraded Z custom project
+outZip.addLocalFolder(path.join(outputDir, customName), customName);
+console.log("  Added: " + customName + "/ (upgraded custom project)");
+
 const outputZip = path.join(path.dirname(customDir),
   customName + "_upgraded_" + new Date().toISOString().slice(0,10) + ".zip");
 outZip.writeZip(outputZip);
 
-console.log("\n✅ Upgraded ZIP: " + outputZip);
+console.log("\n✅ Upgrade complete: " + outputZip);
+console.log("   ZIP contains:");
+console.log("   SAPAssetManager/  ← new SAP version + upgraded CIM inside");
+console.log("   " + customName + "/  ← upgraded Z project");
 console.log("   " + results.upgraded.length + " upgraded, " +
-            results.no_change.length + " unchanged, " + results.failed.length + " failed");
-console.log("\nZIP contains:");
+            results.no_change.length + " unchanged, " + results.failed.length + " failed");g("\nZIP contains:");
 console.log("  " + customName + "/  — Z files upgraded + standard MDK at new version");
 console.log("  SAPAssetManager/  — CIM with upgraded Target paths");
 console.log("\nNext: extract alongside new SAPAssetManager → validate → deploy DEV");
@@ -455,30 +503,34 @@ console.log("\nNext: extract alongside new SAPAssetManager → validate → depl
 
 ## Phase 5 — Post-upgrade checklist
 
-**The upgraded ZIP has been delivered. Existing custom project is completely untouched.**
+**What the output ZIP contains:**
 
-**What the ZIP contains:**
+```
+<CUSTOM_DIR>_upgraded_<date>.zip
+  SAPAssetManager/          ← NEW version (latest SAP release)
+    <CUSTOM_NAME>.cim       ← CIM upgraded: Target paths + SchemaVersion updated
+    Application.app         ← latest SAP version
+    Pages/ Rules/ Actions/ Services/ i18n/ ...
 
-`<CUSTOM_DIR>/`:
-- CIM-registered Z files — upgraded (new SAP base + your custom logic on top)
-- Standard MDK files (`.project.json`, `Application.app` etc.) — new version from SAP
-- Non-CIM standalone files — carried forward as-is (your own additions, untouched)
-- `Services/` — replaced from new SAP version (latest OData metadata)
-
-`SAPAssetManager/`:
-- CIM file — custom `Source` entries kept, `Target` paths upgraded to new SAP paths, new SAP standard entries added
-
-**Path to ZIP:** `<CUSTOM_NAME>_upgraded_<date>.zip` — same folder as existing custom project.
+  <CUSTOM_DIR>/             ← upgraded Z custom project
+    Rules/                  ← your custom files on new SAP base
+    Pages/
+    Services/               ← replaced from new SAP version
+    .project.json           ← new SAP version
+    Application.app         ← new SAP version
+    (non-CIM files)         ← carried forward as-is
+```
 
 **Developer steps:**
-- [ ] Extract the ZIP alongside your new `SAPAssetManager/` folder
-- [ ] Open VS Code with: new `SAPAssetManager/` + extracted `<CUSTOM_NAME>/` in same workspace
-- [ ] Run `mdk_manage validate` → must be 0 errors
-- [ ] Bump `ApplicationVersion` in `.project.json` (MAJOR if schema changed)
-- [ ] Offline app: implement `OnWillUpdate` + `OnDidUpdate` — see `mdk-deployment-guide` skill
-- [ ] Deploy DEV → test → QA → PROD — see `mdk-deployment-guide` skill
+- [ ] Extract the ZIP — both `SAPAssetManager/` and `<CUSTOM_DIR>/` land together
+- [ ] Verify CIM is in `SAPAssetManager/` root — not inside `<CUSTOM_DIR>/`
+- [ ] Open the extracted workspace in VS Code
+- [ ] Run `mdk_manage validate` → 0 errors
+- [ ] Bump `ApplicationVersion` in `.project.json`
+- [ ] Offline app: `OnWillUpdate` + `OnDidUpdate` — see `mdk-deployment-guide` skill
+- [ ] Deploy DEV → QA → PROD — see `mdk-deployment-guide` skill
 
-**Old project** at `<customDir>` is safe to compare against or roll back to at any time.
+**Old project** at original locations is completely untouched.
 
 ---
 

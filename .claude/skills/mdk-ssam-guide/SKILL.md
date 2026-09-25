@@ -129,8 +129,11 @@ CIM lives in SAPAssetManager/ root. JSON format:
 }
 ```
 
-- Source — path to your custom file
-- Target — SAP standard file it overrides
+- `Source` — path to your custom file in `<CUSTOM_DIR>/`
+- `Target` — path to the SAP standard file it overrides in `SAPAssetManager/`
+- **Never add a `Description` or any other field — `Source` and `Target` only**
+
+Use `Edit` tool to add this entry to the `IntegrationPoints` array in the CIM file.
 
 Add entry for every new file:
 ```javascript
@@ -157,21 +160,42 @@ const rules = [];
 function scan(d) {
   if (!fs.existsSync(d)) return;
   for (const e of fs.readdirSync(d, { withFileTypes: true })) {
-    if (e.isDirectory()) scan(path.join(d, e.name));
+    const p = path.join(d, e.name);
+    if (e.isDirectory()) scan(p);
     else if (e.name.endsWith(".js")) rules.push(path.basename(e.name, ".js"));
   }
 }
 scan(path.join(customDir, "Rules"));
-console.log("Missing from CIM:", rules.filter(r => !registered.has(r)));
-console.log("Stale CIM entries:", [...registered].filter(r => !rules.includes(r)));
+const missing = rules.filter(r => !registered.has(r));
+const stale   = [...registered].filter(r => !rules.includes(r));
+console.log("Missing from CIM (ADD):", missing);
+console.log("Stale CIM entries:", stale);
 ```
 
 ---
 
-## Post-customization checklist
+## Checklist before committing SSAM changes
 
-- [ ] All new files in <CUSTOM_DIR>/ only
-- [ ] Every new .js rule has a CIM entry (Source + Target)
-- [ ] No files modified in SAPAssetManager/
-- [ ] mcp__mdk__mdk-manage { "operation": "validate" } -> 0 errors
-- [ ] Import paths use correct relative paths to SAPAssetManager/
+- [ ] No files modified in `SAPAssetManager/`
+- [ ] All new files created in `<CUSTOM_DIR>/` only
+- [ ] Every new `.js` rule has a CIM entry in the CIM file
+- [ ] Rule names match between file name and CIM entry
+- [ ] `mdk-manage validate` passes 0 errors
+- [ ] Tested against SAPAssetManager base without custom code (regression)
+
+---
+
+## Upgrading SSAM to a new version
+
+For upgrading between SSAM versions (running the SAP Metadata Upgrade Tool,
+applying SAP Notes, merging customized metadata with new out-of-box releases),
+see the `mdk-ssam-upgrade` skill.
+
+---
+
+## Related skills
+
+- `mdk-ssam-guide` — SSAM project conventions and override patterns (this skill)
+- `mdk-ssam-upgrade` — automated SSAM version upgrade workflow
+- `mdk-deployment-guide` — OnWillUpdate/OnDidUpdate for schema-breaking upgrades + deploy to dev/QA/prod
+- `mdk-app-builder` — general MDK artifact schemas (pages, actions, rules)

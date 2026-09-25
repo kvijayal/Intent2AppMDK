@@ -280,12 +280,23 @@ mcp__mdk__mdk-create {
 This creates the proper MDK project structure — `.project.json`, `Application.app`,
 `Pages/`, `Actions/`, `Rules/`, `i18n/` — using the service from SAPAssetManager.
 
-Then create the CIM file:
+Then create the CIM file — **always in `SAPAssetManager/`, never inside the Z project**:
 ```javascript
+// CIM lives in SAPAssetManager/ root — not inside the Z project folder
 const cimPath = path.join(String.raw`<sap_dir>`, String.raw`<customName>` + ".cim");
 if (!fs.existsSync(cimPath)) {
-  fs.writeFileSync(cimPath, JSON.stringify({ IntegrationPoints: [] }, null, 4));
-  console.log("CIM created: " + cimPath);
+  let schemaVersion = "unknown";
+  try {
+    const app = JSON.parse(fs.readFileSync(path.join(String.raw`<sap_dir>`, "Application.app"), "utf8"));
+    schemaVersion = app._SchemaVersion || app.SchemaVersion || "unknown";
+  } catch(_) {}
+  fs.writeFileSync(cimPath, JSON.stringify({
+    ProjectName: String.raw`<customName>`,
+    ApplicationName: String.raw`<customName>`,
+    SchemaVersion: schemaVersion,
+    IntegrationPoints: []
+  }, null, 4));
+  console.log("CIM created: " + cimPath + " (schema: " + schemaVersion + ")");
 }
 ```
 
@@ -436,12 +447,23 @@ mcp__mdk__mdk-create {
 This creates the proper MDK project structure — `.project.json`, `Application.app`,
 `Pages/`, `Actions/`, `Rules/`, `i18n/` — using the service from SAPAssetManager.
 
-Then create the CIM file:
+Then create the CIM file — **always in `SAPAssetManager/`, never inside the Z project**:
 ```javascript
+// CIM lives in SAPAssetManager/ root — not inside the Z project folder
 const cimPath = path.join(String.raw`<sap_dir>`, String.raw`<customName>` + ".cim");
 if (!fs.existsSync(cimPath)) {
-  fs.writeFileSync(cimPath, JSON.stringify({ IntegrationPoints: [] }, null, 4));
-  console.log("CIM created: " + cimPath);
+  let schemaVersion = "unknown";
+  try {
+    const app = JSON.parse(fs.readFileSync(path.join(String.raw`<sap_dir>`, "Application.app"), "utf8"));
+    schemaVersion = app._SchemaVersion || app.SchemaVersion || "unknown";
+  } catch(_) {}
+  fs.writeFileSync(cimPath, JSON.stringify({
+    ProjectName: String.raw`<customName>`,
+    ApplicationName: String.raw`<customName>`,
+    SchemaVersion: schemaVersion,
+    IntegrationPoints: []
+  }, null, 4));
+  console.log("CIM created: " + cimPath + " (schema: " + schemaVersion + ")");
 }
 ```
 
