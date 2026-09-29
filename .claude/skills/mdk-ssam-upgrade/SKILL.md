@@ -435,15 +435,29 @@ console.log("✅ Standalone files added as-is");
 // Copy from newSapExtracted (the extracted new SAPAssetManager) not from old sapDir
 const newServicesDir = path.join(newSapExtracted, "Services");
 if (fs.existsSync(newServicesDir)) {
-  // Read destination name from old custom project's .service.metadata
-  // so service files point to the correct Mobile Services destination
-  let destName = null;
+  // Build map of old service filename → destination name from existing custom project
+  // New service files (not in old project) are flagged for developer review
+  const oldDestMap = new Map();
   try {
-    const meta = JSON.parse(fs.readFileSync(
-      path.join(customDir, ".service.metadata"), "utf8"));
-    destName = (meta.mobile && meta.mobile.destinations && meta.mobile.destinations[0])
-      ? meta.mobile.destinations[0].name : null;
+    const oldServicesDir = path.join(customDir, "Services");
+    if (fs.existsSync(oldServicesDir)) {
+      function scanOldSvc(dir) {
+        for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+          const p = path.join(dir, e.name);
+          if (e.isDirectory()) scanOldSvc(p);
+          else if (e.name.endsWith(".service")) {
+            try {
+              const svc = JSON.parse(fs.readFileSync(p, "utf8"));
+              const dest = svc.DestinationName || svc.Destination || svc.destinationName;
+              if (dest) oldDestMap.set(e.name, dest);
+            } catch(_) {}
+          }
+        }
+      }
+      scanOldSvc(oldServicesDir);
+    }
   } catch(_) {}
+  const newServices = []; // tracks brand-new service files needing developer input
 
   // Mirror exact structure from newSapExtracted/Services/ — same folders, same filenames
   function addServiceDir(dir) {
@@ -455,12 +469,22 @@ if (fs.existsSync(newServicesDir)) {
 
       if (e.isDirectory()) {
         addServiceDir(srcPath);  // recurse — preserves subfolder structure
-      } else if (e.name.endsWith(".service") && destName) {
-        // Update Destination in .service files to match project's Mobile Services destination
+      } else if (e.name.endsWith(".service")) {
         let svc = fs.readFileSync(srcPath, "utf8");
-        svc = svc.replace(/"Destination"\s*:\s*"[^"]*"/g,
-          `"Destination": "${destName}"`);
-        addToZip(zipPath, svc);
+        const oldDest = oldDestMap.get(e.name);
+        if (oldDest) {
+          // Known service — replace DestinationName with the old project's value
+          svc = svc.replace(/"DestinationName"\s*:\s*"[^"]*"/g,
+            `"DestinationName": "${oldDest}"`);
+          addToZip(zipPath, svc);
+        } else {
+          // New service file not in old project — carry SAP default, flag for review
+          newServices.push({
+            file: e.name,
+            defaultDest: (JSON.parse(svc).DestinationName || "unknown")
+          });
+          addToZip(zipPath, svc); // keep SAP default for now
+        }
       } else {
         // All other files (XML, metadata etc.) — copy exactly as-is from new SAP version
         addFileToZip(zipPath, srcPath);
@@ -469,6 +493,12 @@ if (fs.existsSync(newServicesDir)) {
   }
   addServiceDir(newServicesDir);
   console.log("✅ Services/ structure mirrors SAPAssetManager/Services/ exactly");
+  // Report new services needing developer input
+  if (newServices.length > 0) {
+    console.log("\nNEW_SERVICES_FOUND:" + JSON.stringify(newServices));
+    console.log("\n⚠ " + newServices.length + " new service file(s) need destination names:");
+    newServices.forEach(s => console.log("  " + s.file + " (SAP default: " + s.defaultDest + ")"));
+  }
   console.log("✅ Services/ from new SAP version (destination: " + (destName || "unchanged") + ")");
 
   // Also copy .service.metadata from new SAP version — contains updated OData definitions
@@ -574,6 +604,53 @@ if (saveFormat === "zip") {
   console.log("   " + customName + "/ → " + customDest);
 }
 
+// ── Quality checklist — runs automatically before packaging ──
+const qualityIssues = [];
+function checkFile(filePath, zipPath) {
+  try {
+    const src = fs.readFileSync(filePath, "utf8");
+    const rel = zipPath;
+
+    // Only check .js rule files
+    if (!filePath.endsWith(".js")) return;
+
+    // 1. Must export default named function
+    if (!src.includes("export default function")) {
+      qualityIssues.push(rel + ": missing 'export default function'");
+    }
+    // 2. Promises must have .catch()
+    const thenCount  = (src.match(/\.then\(/g) || []).length;
+    const catchCount = (src.match(/\.catch\(/g) || []).length;
+    if (thenCount > 0 && catchCount === 0) {
+      qualityIssues.push(rel + ": .then() without .catch()");
+    }
+    // 3. No hardcoded user-visible strings (simple check for quoted labels)
+    if (/return\s+["'][A-Z][^"']{3,}["']/.test(src)) {
+      qualityIssues.push(rel + ": possible hardcoded string — use i18n");
+    }
+  } catch(_) {}
+}
+
+// Check all upgraded JS files in outputDir
+function scanForQuality(dir, zipBase) {
+  if (!fs.existsSync(dir)) return;
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    const z = zipBase + "/" + e.name;
+    if (e.isDirectory()) scanForQuality(p, z);
+    else if (e.name.endsWith(".js")) checkFile(p, z);
+  }
+}
+scanForQuality(path.join(outputDir, customName), customName);
+
+if (qualityIssues.length > 0) {
+  console.log("\n⚠ Quality checklist issues found (" + qualityIssues.length + "):");
+  qualityIssues.forEach(i => console.log("  " + i));
+  console.log("  Review these before deploying.");
+} else {
+  console.log("\n✅ Quality checklist passed — all upgraded rule files OK");
+}
+
 console.log("\nUpgrade stats: " + results.upgraded.length + " upgraded, " +
             results.no_change.length + " unchanged, " + results.failed.length + " failed");g("\nZIP contains:");
 console.log("  " + customName + "/  — Z files upgraded + standard MDK at new version");
@@ -601,21 +678,60 @@ console.log("\nNext: extract alongside new SAPAssetManager → validate → depl
     (non-CIM files)         ← carried forward as-is
 ```
 
-**Quality checklist — apply before packaging (load `mdk-quality-checklist` skill):**
-- [ ] Every upgraded `.js` rule exports default named function
-- [ ] No hardcoded strings — user-visible text in i18n
-- [ ] All Promises have `.catch()` handlers
-- [ ] Import paths use correct relative paths to SAPAssetManager/
-- [ ] No files written to SAPAssetManager/
-- [ ] Every Z rule file has a CIM entry (Source + Target only)
+**Automated checks (run before packaging — agent handles these):**
+
+| Check | How handled |
+|---|---|
+| Service `DestinationName` for existing services | Copied from old project's service files automatically |
+| New service files not in old project | `BLOCKING` — developer provides destination or confirms SAP default |
+| `ApplicationVersion` bump | Agent bumps automatically in upgraded `.project.json` |
+| Quality checklist on rule files | Runs automatically in upgrade script |
+| New services with no Z customization | Reported to developer — decision to integrate or leave unused |
+
+**Agent must do these automatically before saving output:**
+
+1. **Bump `ApplicationVersion`** in `<CUSTOM_DIR>/.project.json`:
+```javascript
+const projPath = path.join(outputDir, customName, ".project.json");
+if (fs.existsSync(projPath)) {
+  const proj = JSON.parse(fs.readFileSync(projPath, "utf8"));
+  const parts = (proj.ApplicationVersion || "1.0.0").split(".");
+  parts[parts.length-1] = String(parseInt(parts[parts.length-1] || 0) + 1);
+  proj.ApplicationVersion = parts.join(".");
+  fs.writeFileSync(projPath, JSON.stringify(proj, null, 4));
+  console.log("✅ ApplicationVersion bumped to: " + proj.ApplicationVersion);
+}
+```
+
+2. **Report offline migration risk** — check if any upgraded CIM-registered files are in `Rules/` and include `OnWillUpdate` or `OnDidUpdate`:
+```javascript
+const hasOfflineHooks = results.upgraded.some(name =>
+  name.includes("OnWillUpdate") || name.includes("OnDidUpdate"));
+if (!hasOfflineHooks) {
+  console.log("⚠ OFFLINE_CHECK: No OnWillUpdate/OnDidUpdate found in upgraded rules.");
+  console.log("  If this app has offline data and the schema changed between versions,");
+  console.log("  implement these hooks before deploying to prevent data loss.");
+}
+```
+
+3. **Report new services summary** at end of script:
+```javascript
+if (newServices.length > 0) {
+  console.log("\\n⚠ NEW_SERVICES (" + newServices.length + ") — no upgrade path from old project:");
+  newServices.forEach(s => {
+    console.log("  " + s.file + " (default: " + s.defaultDest + ")");
+    console.log("  → Decide: integrate with ZEquinorSSAM, or leave unused until BTP destination is ready");
+  });
+}
+```
 
 **Developer steps after extracting ZIP:**
 - [ ] Verify CIM is in `SAPAssetManager/` root — not inside `<CUSTOM_DIR>/`
 - [ ] Open the extracted workspace in VS Code
-- [ ] Run `mdk_manage validate` → 0 errors
-- [ ] Bump `ApplicationVersion` in `.project.json`
-- [ ] Offline app: `OnWillUpdate` + `OnDidUpdate` — see `mdk-deployment-guide` skill
-- [ ] Deploy DEV → QA → PROD — see `mdk-deployment-guide` skill
+- [ ] Run `mdk_manage validate` → 0 errors before deploying
+- [ ] For new services — create BTP destinations if you want to use them
+- [ ] If app is offline-capable — review `OnWillUpdate`/`OnDidUpdate` hooks
+- [ ] Deploy DEV → test → QA → PROD — see `mdk-deployment-guide` skill
 
 **Old project** at original locations is completely untouched.
 
