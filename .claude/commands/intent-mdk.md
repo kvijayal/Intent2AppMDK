@@ -60,6 +60,7 @@ Options:
   - "Standard MDK App"             → proceed to STEP 2b
   - "Upgrade SAP Asset Manager"    → set intent=ssam-upgrade, jump to STEP 3
   - "Customize SAP Asset Manager"  → load the /intent-ssam skill and execute it; do not continue in this file
+  - "SSAM Patch Update"           → set intent=ssam-patch-update, jump to STEP 3
 ```
 
 **2b. Standard MDK App — sub-options:**
