@@ -137,6 +137,8 @@ All output goes into a ZIP. Existing workspace is always 100% untouched.
 | CF login, region setup, Mobile Services configuration | `mdk-deployment-guide` skill |
 | SSAM project conventions, CIM file, custom Z project folder | `mdk-ssam-guide` skill |
 | SSAM version upgrade, Metadata Upgrade Tool, merge conflicts | `mdk-ssam-upgrade` skill |
+| SSAM pre-upgrade conflict analysis — classify custom artifacts before upgrade | `ssam-conflict-analyzer` skill — run before `mdk-ssam-upgrade` to identify ABSORBED / INCOMPATIBLE / TARGET-MOVED items |
+| SSAM conflict resolution — apply fixes from conflict analyzer output | `ssam-conflict-resolver` skill — patches CIM paths, removes absorbed files, renames incompatible identifiers; run after analyzer, before upgrade |
 | SSAM Upgrade or Customize interactive workflow (from /intent) | `mdk-ssam-guide` skill — SSAM project structure templates, CIM creation, Z project scaffolding, override patterns, Z naming, validation checklist |
 | CAP backend + MDK mobile frontend full-stack | `mdk-app-builder` skill |
 | Multi-environment deploy, device onboarding, QR code, CI/CD | `mdk-deployment-guide` skill |

@@ -132,15 +132,25 @@
       "sourceType": "local",
       "skillPath": "skills/mdk-offline-reliability/SKILL.md"
     },
-    "mdk-deployment-guidement-guide": {
+    "mdk-deployment-guide": {
       "source": "local",
       "sourceType": "local",
-      "skillPath": "skills/mdk-deployment-guidement-guide/SKILL.md"
+      "skillPath": "skills/mdk-deployment-guide/SKILL.md"
     },
     "mdk-ssam-guide": {
       "source": "local",
       "sourceType": "local",
       "skillPath": "skills/mdk-ssam-guide/SKILL.md"
+    },
+    "ssam-conflict-analyzer": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/ssam-conflict-analyzer/SKILL.md"
+    },
+    "ssam-conflict-resolver": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": "skills/ssam-conflict-resolver/SKILL.md"
     }
   }
 }
